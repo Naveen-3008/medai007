@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Activity,
   Target,
   Zap,
   Microscope,
@@ -14,12 +13,9 @@ import {
   Printer,
   ChevronDown,
   ChevronUp,
-  Share2,
-  Clock,
-  HeartPulse,
   Ban,
   Droplets,
-  AlertCircle
+  Bot
 } from 'lucide-react';
 import { MedicalAssessment } from '../types';
 
@@ -47,7 +43,6 @@ export const GuideResults: React.FC<GuideResultsProps> = ({
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Text-To-Speech handler using Web Speech API
   useEffect(() => {
     return () => {
       if ('speechSynthesis' in window) {
@@ -67,7 +62,7 @@ export const GuideResults: React.FC<GuideResultsProps> = ({
       setIsPlayingAudio(false);
     } else {
       const g = assessment.fivePointGuide;
-      const textToRead = `Medical assessment for ${assessment.conditionName}. Severity is ${assessment.severity}. Point 1, Cause: ${g.cause.summary}. Point 2, Effect: ${g.effect.summary}. Point 3, Reason: ${g.reason.summary}. Point 4, Treatment: Immediate first aid includes ${g.treatment.immediateFirstAid.join(', ')}. Point 5, Diet: Recommended foods include ${g.diet.recommendedFoods.join(', ')}. Please remember this is an academic demonstration and not clinical medical advice.`;
+      const textToRead = `Mr Health AI guide for ${assessment.conditionName}. Point 1, Cause: ${g.cause.summary}. Point 2, Effect: ${g.effect.summary}. Point 3, Why it happens: ${g.reason.summary}. Point 4, Treatment: ${g.treatment.immediateFirstAid.join(', ')}. Point 5, Diet: ${g.diet.recommendedFoods.join(', ')}.`;
 
       const utterance = new SpeechSynthesisUtterance(textToRead);
       utterance.rate = 0.95;
@@ -80,9 +75,9 @@ export const GuideResults: React.FC<GuideResultsProps> = ({
 
   const handleCopyReport = () => {
     const g = assessment.fivePointGuide;
-    const reportText = `MEDSTREAMLIT 5-POINT MEDICAL GUIDE (ACADEMIC DEMO)
+    const reportText = `MR HEALTH AI - 5-POINT HEALTH GUIDE
 ------------------------------------------------------
-Condition: ${assessment.conditionName}
+Assessment: ${assessment.conditionName}
 Category: ${assessment.category}
 Severity: ${assessment.severity} (${assessment.severityDescription})
 Analyzed At: ${new Date(assessment.analyzedAt).toLocaleString()}
@@ -91,28 +86,28 @@ Analyzed At: ${new Date(assessment.analyzedAt).toLocaleString()}
 ${g.cause.summary}
 ${g.cause.details.map((d) => `• ${d}`).join('\n')}
 
-2. EFFECT:
+2. EFFECT ON BODY:
 ${g.effect.summary}
 ${g.effect.details.map((d) => `• ${d}`).join('\n')}
 
-3. REASON (Biological Mechanism):
+3. WHY IT HAPPENS:
 ${g.reason.summary}
 ${g.reason.details.map((d) => `• ${d}`).join('\n')}
 
-4. TREATMENT:
+4. TREATMENT & WHAT TO DO:
 Immediate First Aid:
 ${g.treatment.immediateFirstAid.map((d) => `• ${d}`).join('\n')}
-Supportive & Clinical Care:
+Home Care & Support:
 ${g.treatment.clinicalTreatments.map((d) => `• ${d}`).join('\n')}
-Important Precautions / Do Not:
+Things NOT to do:
 ${g.treatment.warnings.map((d) => `• ${d}`).join('\n')}
 
-5. DIET & NUTRITION:
-Recommended Foods: ${g.diet.recommendedFoods.join(', ')}
+5. HEALING DIET & WATER:
+Foods to Eat: ${g.diet.recommendedFoods.join(', ')}
 Foods to Avoid: ${g.diet.foodsToAvoid.join(', ')}
 Hydration: ${g.diet.hydrationGuidance}
 
-RED FLAGS / WHEN TO SEEK EMERGENCY CARE:
+WHEN TO SEE A DOCTOR:
 ${assessment.whenToSeekDoctor.map((d) => `⚠️ ${d}`).join('\n')}
 
 DISCLAIMER:
@@ -128,350 +123,290 @@ ${assessment.disclaimer}
     window.print();
   };
 
-  const getSeverityBadge = () => {
-    const sev = assessment.severity.toLowerCase();
-    if (sev.includes('mild')) {
+  const g = assessment.fivePointGuide;
+
+  const getSeverityBadge = (sev: string) => {
+    if (sev.toLowerCase().includes('emergency') || sev.toLowerCase().includes('severe')) {
       return {
-        bg: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700',
-        dot: 'bg-emerald-500',
-        label: 'Mild Severity / Home Care Likely Appropriate',
+        bg: 'bg-rose-50 dark:bg-rose-950/80 border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-200',
+        dot: 'bg-rose-500',
+        label: 'Seek Medical Care / Clinical Check',
       };
     }
-    if (sev.includes('moderate')) {
+    if (sev.toLowerCase().includes('moderate')) {
       return {
-        bg: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700',
+        bg: 'bg-amber-50 dark:bg-amber-950/80 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200',
         dot: 'bg-amber-500',
-        label: 'Moderate Severity / Monitor Closely',
+        label: 'Moderate Severity (Monitor Closely)',
       };
     }
     return {
-      bg: 'bg-rose-100 dark:bg-rose-950/70 text-rose-900 dark:text-rose-200 border-rose-400 dark:border-rose-700 font-bold animate-pulse',
-      dot: 'bg-rose-600',
-      label: 'Severe / Seek Prompt In-Person Medical Attention',
+      bg: 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200',
+      dot: 'bg-emerald-500',
+      label: 'Mild Severity (Safe for Home Care)',
     };
   };
 
-  const severityBadge = getSeverityBadge();
-  const guide = assessment.fivePointGuide;
+  const badge = getSeverityBadge(assessment.severity);
 
   return (
-    <div id="medical-guide-results-container" className="space-y-6 animate-fadeIn">
-      {/* Assessment Overview Card */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 md:p-6 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+    <section
+      id="medical-guide-results-container"
+      aria-label="Mr Health AI 5-Point Report"
+      className="space-y-3 animate-in fade-in slide-in-from-bottom-3 duration-200"
+    >
+      {/* 1. Header Overview Card - Compact */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2.5">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="px-2 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                <Bot className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
+                Mr Health AI
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-semibold border border-slate-200 dark:border-slate-700">
                 {assessment.category}
               </span>
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold border ${severityBadge.bg}`}
-              >
-                <span className={`w-2 h-2 rounded-full ${severityBadge.dot}`} />
-                {assessment.severity}
-              </span>
             </div>
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               {assessment.conditionName}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              Generated on {new Date(assessment.analyzedAt).toLocaleDateString()} at{' '}
-              {new Date(assessment.analyzedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </p>
           </div>
 
-          {/* Quick Actions Toolbar */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1.5">
             <button
-              id="btn-tts-read-aloud"
               type="button"
               onClick={handleToggleSpeech}
-              className={`p-2.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border flex items-center gap-1 transition cursor-pointer shadow-2xs ${
                 isPlayingAudio
-                  ? 'bg-rose-600 text-white border-rose-600'
-                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  ? 'bg-cyan-600 text-white border-cyan-500 shadow-xs'
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700'
               }`}
-              title={isPlayingAudio ? 'Stop reading' : 'Read guide aloud'}
+              title={isPlayingAudio ? 'Stop audio' : 'Listen with Voice'}
             >
-              {isPlayingAudio ? <VolumeX className="w-4 h-4 animate-bounce" /> : <Volume2 className="w-4 h-4 text-rose-500" />}
-              <span>{isPlayingAudio ? 'Stop Audio' : 'Listen'}</span>
+              {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />}
+              <span>{isPlayingAudio ? 'Stop' : 'Listen'}</span>
             </button>
 
             <button
-              id="btn-copy-report"
               type="button"
               onClick={handleCopyReport}
-              className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
-              title="Copy structured report"
+              className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition cursor-pointer shadow-2xs"
+              title="Copy report"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-slate-400" />}
-              <span>{copied ? 'Copied!' : 'Copy'}</span>
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
             </button>
 
             <button
-              id="btn-print-report"
               type="button"
               onClick={handlePrint}
-              className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1 transition cursor-pointer shadow-2xs"
               title="Print report"
             >
-              <Printer className="w-4 h-4 text-slate-400" />
+              <Printer className="w-3.5 h-3.5 text-slate-500" />
               <span>Print</span>
             </button>
           </div>
         </div>
 
-        {/* Clinical Rationale Note */}
-        <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2.5">
-          <HeartPulse className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-          <div>
-            <strong className="text-slate-800 dark:text-slate-200 font-semibold">Triage Rationale: </strong>
-            <span>{assessment.severityDescription}</span>
+        {/* Severity Banner - Tight */}
+        <div className={`py-2 px-3 rounded-xl border shadow-2xs flex items-center gap-2.5 ${badge.bg}`}>
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${badge.dot}`} />
+            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${badge.dot}`} />
+          </span>
+          <div className="text-xs">
+            <span className="font-extrabold uppercase tracking-wider">
+              {badge.label}:
+            </span>{' '}
+            <span className="font-medium opacity-90">
+              {assessment.severityDescription}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 5-POINT SIMPLIFIED GUIDE CONTAINER */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-rose-600" />
-            <span>Structured 5-Point Simplified Medical Guide</span>
-          </h3>
-          <span className="text-xs text-slate-500 font-mono">5/5 points verified</span>
-        </div>
-
-        {/* 1. CAUSE CARD */}
-        <div
-          id="guide-point-1-cause"
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs transition hover:border-blue-300 dark:hover:border-blue-800"
-        >
+      {/* 2. THE 5-POINT GUIDE CARDS - Compact Spacing */}
+      <div className="space-y-2.5">
+        {/* POINT 1: CAUSE */}
+        <div className="bg-white dark:bg-slate-900 border border-indigo-100 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs transition hover:border-indigo-300">
           <div
             onClick={() => toggleSection('cause')}
-            className="p-4 md:p-5 flex items-center justify-between bg-blue-50/40 dark:bg-blue-950/20 cursor-pointer select-none"
+            className="flex items-center justify-between cursor-pointer"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shadow-blue-500/20">
-                1
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center border border-indigo-200 dark:border-indigo-800 font-bold">
+                <Target className="w-4 h-4" />
               </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">
-                  Point 1 • Etiology
-                </span>
-                <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  {guide.cause.title || '1. Cause & Precipitating Factors'}
-                </h4>
-              </div>
+              <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                {g.cause.title || '1. Cause'}
+              </h3>
             </div>
-            <button className="text-slate-400 p-1">
-              {expandedSections.cause ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <button className="text-slate-400 hover:text-slate-700 p-0.5">
+              {expandedSections.cause ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
 
           {expandedSections.cause && (
-            <div className="p-5 border-t border-slate-100 dark:border-slate-800/80 space-y-3.5">
-              <div className="p-3.5 bg-blue-50/50 dark:bg-blue-950/30 border-l-4 border-blue-600 rounded-r-xl text-sm font-medium text-blue-950 dark:text-blue-200 leading-relaxed">
-                {guide.cause.summary}
-              </div>
-              {guide.cause.details && guide.cause.details.length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Primary Triggers & Biomechanical Factors:
-                  </div>
-                  <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
-                    {guide.cause.details.map((detail, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 shrink-0" />
-                        <span>{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <p className="text-xs font-semibold text-indigo-950 dark:text-indigo-200 bg-indigo-50/80 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-900/40 p-2.5 rounded-xl">
+                {g.cause.summary}
+              </p>
+              <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 pl-1">
+                {g.cause.details.map((detail, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-1.5 shrink-0" />
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
 
-        {/* 2. EFFECT CARD */}
-        <div
-          id="guide-point-2-effect"
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs transition hover:border-amber-300 dark:hover:border-amber-800"
-        >
+        {/* POINT 2: EFFECT */}
+        <div className="bg-white dark:bg-slate-900 border border-sky-100 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs transition hover:border-sky-300">
           <div
             onClick={() => toggleSection('effect')}
-            className="p-4 md:p-5 flex items-center justify-between bg-amber-50/40 dark:bg-amber-950/20 cursor-pointer select-none"
+            className="flex items-center justify-between cursor-pointer"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shadow-amber-500/20">
-                2
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 flex items-center justify-center border border-sky-200 dark:border-sky-800 font-bold">
+                <Zap className="w-4 h-4" />
               </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 font-mono">
-                  Point 2 • Symptomatology
-                </span>
-                <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  {guide.effect.title || '2. Effect & Bodily Manifestations'}
-                </h4>
-              </div>
+              <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                {g.effect.title || '2. Effect on Body'}
+              </h3>
             </div>
-            <button className="text-slate-400 p-1">
-              {expandedSections.effect ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <button className="text-slate-400 hover:text-slate-700 p-0.5">
+              {expandedSections.effect ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
 
           {expandedSections.effect && (
-            <div className="p-5 border-t border-slate-100 dark:border-slate-800/80 space-y-3.5">
-              <div className="p-3.5 bg-amber-50/50 dark:bg-amber-950/30 border-l-4 border-amber-600 rounded-r-xl text-sm font-medium text-amber-950 dark:text-amber-200 leading-relaxed">
-                {guide.effect.summary}
-              </div>
-              {guide.effect.details && guide.effect.details.length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Symptomatic Consequences & Tissue Impact:
-                  </div>
-                  <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
-                    {guide.effect.details.map((detail, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-600 mt-2 shrink-0" />
-                        <span>{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <p className="text-xs font-semibold text-sky-950 dark:text-sky-200 bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200/70 dark:border-sky-900/40 p-2.5 rounded-xl">
+                {g.effect.summary}
+              </p>
+              <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 pl-1">
+                {g.effect.details.map((detail, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-600 dark:bg-sky-400 mt-1.5 shrink-0" />
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
 
-        {/* 3. REASON CARD */}
-        <div
-          id="guide-point-3-reason"
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs transition hover:border-purple-300 dark:hover:border-purple-800"
-        >
+        {/* POINT 3: REASON */}
+        <div className="bg-white dark:bg-slate-900 border border-emerald-100 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs transition hover:border-emerald-300">
           <div
             onClick={() => toggleSection('reason')}
-            className="p-4 md:p-5 flex items-center justify-between bg-purple-50/40 dark:bg-purple-950/20 cursor-pointer select-none"
+            className="flex items-center justify-between cursor-pointer"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shadow-purple-500/20">
-                3
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800 font-bold">
+                <Microscope className="w-4 h-4" />
               </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 font-mono">
-                  Point 3 • Pathophysiology
-                </span>
-                <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  {guide.reason.title || '3. Reason & Biological Mechanism'}
-                </h4>
-              </div>
+              <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                {g.reason.title || '3. Why It Happens'}
+              </h3>
             </div>
-            <button className="text-slate-400 p-1">
-              {expandedSections.reason ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <button className="text-slate-400 hover:text-slate-700 p-0.5">
+              {expandedSections.reason ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
 
           {expandedSections.reason && (
-            <div className="p-5 border-t border-slate-100 dark:border-slate-800/80 space-y-3.5">
-              <div className="p-3.5 bg-purple-50/50 dark:bg-purple-950/30 border-l-4 border-purple-600 rounded-r-xl text-sm font-medium text-purple-950 dark:text-purple-200 leading-relaxed">
-                {guide.reason.summary}
-              </div>
-              {guide.reason.details && guide.reason.details.length > 0 && (
-                <div className="space-y-1.5 pt-1">
-                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Cellular & Biochemical Mechanisms:
-                  </div>
-                  <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
-                    {guide.reason.details.map((detail, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-600 mt-2 shrink-0" />
-                        <span>{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <p className="text-xs font-semibold text-emerald-950 dark:text-emerald-200 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/40 p-2.5 rounded-xl">
+                {g.reason.summary}
+              </p>
+              <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 pl-1">
+                {g.reason.details.map((detail, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 mt-1.5 shrink-0" />
+                    <span>{detail}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
 
-        {/* 4. TREATMENT CARD */}
-        <div
-          id="guide-point-4-treatment"
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs transition hover:border-emerald-300 dark:hover:border-emerald-800"
-        >
+        {/* POINT 4: TREATMENT */}
+        <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs transition hover:border-rose-300">
           <div
             onClick={() => toggleSection('treatment')}
-            className="p-4 md:p-5 flex items-center justify-between bg-emerald-50/40 dark:bg-emerald-950/20 cursor-pointer select-none"
+            className="flex items-center justify-between cursor-pointer"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shadow-emerald-500/20">
-                4
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 flex items-center justify-center border border-rose-200 dark:border-rose-800 font-bold">
+                <ShieldCheck className="w-4 h-4" />
               </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
-                  Point 4 • First Aid & Treatment Protocol
-                </span>
-                <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  {guide.treatment.title || '4. Treatment & First Aid Interventions'}
-                </h4>
-              </div>
+              <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                {g.treatment.title || '4. Treatment & First-Aid'}
+              </h3>
             </div>
-            <button className="text-slate-400 p-1">
-              {expandedSections.treatment ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <button className="text-slate-400 hover:text-slate-700 p-0.5">
+              {expandedSections.treatment ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
 
           {expandedSections.treatment && (
-            <div className="p-5 border-t border-slate-100 dark:border-slate-800/80 space-y-4">
-              {/* Immediate First Aid Actions */}
-              <div className="space-y-2">
-                <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  Immediate Step-by-Step First Aid Protocol:
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                  {guide.treatment.immediateFirstAid.map((step, idx) => (
+            <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+              {/* Immediate Steps */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  Immediate Steps:
+                </span>
+                <div className="grid grid-cols-1 gap-1.5">
+                  {g.treatment.immediateFirstAid.map((step, idx) => (
                     <div
                       key={idx}
-                      className="p-3 bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 rounded-xl text-xs text-slate-800 dark:text-slate-200 flex items-start gap-2.5"
+                      className="flex items-start gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200"
                     >
-                      <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center shrink-0 text-[10px]">
+                      <span className="px-1.5 py-0.2 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-mono font-bold text-[9px]">
                         {idx + 1}
                       </span>
-                      <span className="leading-relaxed">{step}</span>
+                      <span>{step}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Clinical & Supportive Options */}
-              {guide.treatment.clinicalTreatments && guide.treatment.clinicalTreatments.length > 0 && (
-                <div className="space-y-1.5 pt-2">
-                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Supportive Measures & Clinical Modalities:
-                  </div>
-                  <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
-                    {guide.treatment.clinicalTreatments.map((treatment, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-2 shrink-0" />
-                        <span>{treatment}</span>
+              {/* Supportive / Pharmacist */}
+              {g.treatment.clinicalTreatments && g.treatment.clinicalTreatments.length > 0 && (
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-blue-800 dark:text-blue-400 uppercase tracking-wider">
+                    Home Care & Pharmacist Tips:
+                  </span>
+                  <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300 pl-1">
+                    {g.treatment.clinicalTreatments.map((step, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
+                        <span>{step}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              {/* Strict Warnings / What NOT to do */}
-              {guide.treatment.warnings && guide.treatment.warnings.length > 0 && (
-                <div className="p-3.5 bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl space-y-1.5 text-xs text-rose-900 dark:text-rose-200">
-                  <div className="font-bold flex items-center gap-1.5 text-rose-700 dark:text-rose-300">
-                    <Ban className="w-4 h-4" />
-                    Strict Contraindications (What NOT to do):
-                  </div>
-                  <ul className="space-y-1 text-rose-900/90 dark:text-rose-200/90">
-                    {guide.treatment.warnings.map((warn, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
+              {/* Warnings */}
+              {g.treatment.warnings && g.treatment.warnings.length > 0 && (
+                <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/50 space-y-1">
+                  <span className="text-[11px] font-bold text-rose-800 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1">
+                    <Ban className="w-3 h-3 text-rose-600" />
+                    What NOT To Do:
+                  </span>
+                  <ul className="space-y-0.5 text-xs text-rose-800 dark:text-rose-200 pl-1">
+                    {g.treatment.warnings.map((warn, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5">
                         <span>❌</span>
                         <span>{warn}</span>
                       </li>
@@ -483,46 +418,38 @@ ${assessment.disclaimer}
           )}
         </div>
 
-        {/* 5. DIET CARD */}
-        <div
-          id="guide-point-5-diet"
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs transition hover:border-teal-300 dark:hover:border-teal-800"
-        >
+        {/* POINT 5: DIET */}
+        <div className="bg-white dark:bg-slate-900 border border-teal-100 dark:border-slate-800 rounded-2xl p-3.5 shadow-2xs transition hover:border-teal-300">
           <div
             onClick={() => toggleSection('diet')}
-            className="p-4 md:p-5 flex items-center justify-between bg-teal-50/40 dark:bg-teal-950/20 cursor-pointer select-none"
+            className="flex items-center justify-between cursor-pointer"
           >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shadow-teal-500/20">
-                5
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400 flex items-center justify-center border border-teal-200 dark:border-teal-800 font-bold">
+                <Salad className="w-4 h-4" />
               </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400 font-mono">
-                  Point 5 • Nutritional Support & Diet
-                </span>
-                <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  {guide.diet.title || '5. Diet & Nutritional Healing Plan'}
-                </h4>
-              </div>
+              <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white">
+                {g.diet.title || '5. Healing Diet & Water'}
+              </h3>
             </div>
-            <button className="text-slate-400 p-1">
-              {expandedSections.diet ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            <button className="text-slate-400 hover:text-slate-700 p-0.5">
+              {expandedSections.diet ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
 
           {expandedSections.diet && (
-            <div className="p-5 border-t border-slate-100 dark:border-slate-800/80 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Healing Foods */}
-                <div className="p-4 bg-teal-50/50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-900/50 rounded-xl space-y-2">
-                  <div className="text-xs font-bold text-teal-800 dark:text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Salad className="w-4 h-4 text-teal-600" />
-                    Recommended Recovery Foods:
-                  </div>
-                  <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
-                    {guide.diet.recommendedFoods.map((food, idx) => (
-                      <li key={idx} className="flex items-start gap-1.5">
-                        <span className="text-teal-600 font-bold">✓</span>
+            <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Foods to Eat */}
+                <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/50 space-y-1">
+                  <span className="text-[11px] font-bold text-teal-800 dark:text-teal-400 uppercase tracking-wider flex items-center gap-1">
+                    <Salad className="w-3 h-3 text-teal-600" />
+                    Healing Foods:
+                  </span>
+                  <ul className="space-y-0.5 text-xs text-teal-900 dark:text-teal-200">
+                    {g.diet.recommendedFoods.map((food, idx) => (
+                      <li key={idx} className="flex items-start gap-1">
+                        <span>🥑</span>
                         <span>{food}</span>
                       </li>
                     ))}
@@ -530,15 +457,15 @@ ${assessment.disclaimer}
                 </div>
 
                 {/* Foods to Avoid */}
-                <div className="p-4 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60 rounded-xl space-y-2">
-                  <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Ban className="w-4 h-4 text-slate-500" />
-                    Foods / Substances to Avoid:
-                  </div>
-                  <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
-                    {guide.diet.foodsToAvoid.map((food, idx) => (
-                      <li key={idx} className="flex items-start gap-1.5">
-                        <span className="text-rose-500 font-bold">✕</span>
+                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 space-y-1">
+                  <span className="text-[11px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                    <Ban className="w-3 h-3 text-amber-600" />
+                    Limit / Avoid:
+                  </span>
+                  <ul className="space-y-0.5 text-xs text-amber-900 dark:text-amber-200">
+                    {g.diet.foodsToAvoid.map((food, idx) => (
+                      <li key={idx} className="flex items-start gap-1">
+                        <span>⚠️</span>
                         <span>{food}</span>
                       </li>
                     ))}
@@ -546,55 +473,50 @@ ${assessment.disclaimer}
                 </div>
               </div>
 
-              {/* Hydration Guidance */}
-              <div className="p-3.5 bg-sky-50/50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-900/50 rounded-xl text-xs text-sky-950 dark:text-sky-200 flex items-start gap-2.5">
-                <Droplets className="w-4 h-4 text-sky-500 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="font-semibold text-sky-900 dark:text-sky-100">Hydration Strategy: </strong>
-                  <span>{guide.diet.hydrationGuidance}</span>
-                </div>
+              {/* Hydration */}
+              <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-cyan-950/30 border border-sky-200 dark:border-cyan-800/50 flex items-center gap-2">
+                <Droplets className="w-4 h-4 text-sky-600 dark:text-cyan-400 shrink-0" />
+                <p className="text-xs text-slate-700 dark:text-slate-300">
+                  <strong className="text-sky-900 dark:text-cyan-400">Water Goal: </strong>
+                  {g.diet.hydrationGuidance}
+                </p>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* RED FLAGS / EMERGENCY PROTOCOL CALLOUT */}
+      {/* 3. When to See a Doctor Card - Compact */}
       {assessment.whenToSeekDoctor && assessment.whenToSeekDoctor.length > 0 && (
-        <div
-          id="card-red-flags"
-          className="bg-rose-50/80 dark:bg-rose-950/40 border-2 border-rose-400 dark:border-rose-800/80 rounded-2xl p-5 md:p-6 shadow-sm space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 text-rose-900 dark:text-rose-200">
-              <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
-              <h4 className="font-bold text-base">Red-Flag Warning Signs (When to Seek In-Person Medical Care)</h4>
+        <div className="bg-white dark:bg-slate-900 border border-orange-200 dark:border-slate-800 rounded-2xl p-3 shadow-2xs space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                When to See a Doctor (Warning Signs)
+              </h4>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-rose-950 dark:text-rose-200 pt-1">
-            {assessment.whenToSeekDoctor.map((flag, idx) => (
-              <div
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            {assessment.whenToSeekDoctor.map((item, idx) => (
+              <li
                 key={idx}
-                className="p-2.5 bg-white/70 dark:bg-slate-900/60 border border-rose-200 dark:border-rose-900/50 rounded-xl flex items-start gap-2 shadow-2xs"
+                className="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300"
               >
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span className="leading-snug">{flag}</span>
-              </div>
+                <span className="text-orange-500 font-bold">⚠️</span>
+                <span>{item}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
-      {/* Disclaimer Card at the end */}
-      <div className="p-4 bg-slate-100 dark:bg-slate-800/50 rounded-xl text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
-        <p className="font-medium text-slate-700 dark:text-slate-300">
-          Academic Research Prototype • Powered by Gemini 3.7 Flash
-        </p>
-        <p className="max-w-2xl mx-auto text-[11px] leading-relaxed">
-          {assessment.disclaimer}
-        </p>
-      </div>
-    </div>
+      {/* 4. Disclaimer Footer */}
+      <p className="text-[10px] text-center text-slate-500 px-3">
+        {assessment.disclaimer || 'Mr Health AI provides educational guidance. For emergencies, please call emergency services.'}
+      </p>
+    </section>
   );
 };

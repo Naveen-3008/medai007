@@ -61,7 +61,7 @@ function generateSimpleFallback(
 
   if (lower.includes('burn') || lower.includes('steam') || lower.includes('heat') || lower.includes('scald') || lower.includes('fire')) {
     condition = 'Minor Heat Burn / Scald';
-    category = 'Burn Care';
+    category = 'Skin & Burn Care';
     severity = painLevel >= 7 ? 'Moderate' : 'Mild';
     rationale = 'Skin is red and sore from contact with heat or hot liquid.';
     causeSummary = 'Contact with a hot surface, hot liquid, or steam.';
@@ -183,13 +183,13 @@ function generateSimpleFallback(
       'You develop a high fever, severe spreading redness, or foul discharge.',
       'You feel sudden numbness, dizziness, or difficulty breathing.',
     ],
-    disclaimer: 'This 5-point guide is for simple learning and educational purposes only. It is not a replacement for a doctor. Always check with a healthcare professional if you are worried.',
+    disclaimer: 'This 5-point guide from Mr Health AI is for educational and first-aid guidance. Always check with a doctor for serious concerns.',
     analyzedAt: new Date().toISOString(),
   };
 }
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', model: 'gemini-3.1-flash-lite', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', name: 'Mr Health AI', model: 'gemini-3.1-flash-lite', timestamp: new Date().toISOString() });
 });
 
 app.post('/api/recommend', async (req, res) => {
@@ -211,7 +211,7 @@ app.post('/api/recommend', async (req, res) => {
     const ai = getGeminiClient();
 
     if (ai) {
-      const systemInstruction = `You are a helpful, empathetic, first-aid and wellness assistant.
+      const systemInstruction = `You are Mr Health AI, a smart, friendly, empathetic health & first-aid AI assistant.
 Your goal is to explain health conditions in SIMPLE, CLEAR, EVERYDAY LANGUAGE (6th-grade reading level).
 
 CRITICAL SIMPLICITY GUIDELINES:
@@ -226,7 +226,7 @@ CRITICAL SIMPLICITY GUIDELINES:
   5. Diet: Everyday foods and water intake that help healing, plus foods to avoid.
 
 Language: ${language}.
-Always include a simple disclaimer that this is educational advice and to see a doctor for serious issues.`;
+Always include a simple disclaimer that this is educational advice from Mr Health AI and to see a doctor for serious issues.`;
 
       const promptText = `Please analyze this symptom report and provide a simple, easy-to-understand 5-Point Guide:
 Symptom: "${symptoms || 'Assessing based on attached photo.'}"
@@ -342,7 +342,7 @@ Language: ${language}`;
             return res.json(parsed);
           }
         } catch (err: any) {
-          console.warn(`[Gemini API] Model ${modelName} error:`, err.message);
+          console.warn(`[Mr Health AI] Model ${modelName} error:`, err.message);
         }
       }
     }

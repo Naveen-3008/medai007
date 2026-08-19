@@ -3,14 +3,16 @@ import {
   UploadCloud,
   Camera,
   X,
-  FileImage,
   Sparkles,
   RotateCcw,
-  Sliders,
   Clock,
   Activity,
-  AlertCircle,
-  HelpCircle
+  Flame,
+  Smile,
+  Meh,
+  Frown,
+  AlertOctagon,
+  Bot
 } from 'lucide-react';
 import { CameraCaptureModal } from './CameraCaptureModal';
 
@@ -45,16 +47,15 @@ export const InputForm: React.FC<InputFormProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const quickSymptomTags = [
-    'Swelling & Edema',
-    'Sharp Throbbing Pain',
-    'Red Erythema',
-    'Blister Formation',
-    'Bruising / Hematoma',
-    'Intense Itching',
-    'Skin Abrasion',
-    'Burning Sensation',
-    'Joint Stiffness',
+  const quickSymptoms = [
+    { label: 'Hot Burn / Scald', text: 'Accidentally touched hot pan/kettle, painful red stinging with blister', pain: 6 },
+    { label: 'Twisted Ankle', text: 'Twisted ankle playing sports, swollen with sharp pain putting weight on it', pain: 7 },
+    { label: 'Throbbing Toothache', text: 'Sharp throbbing tooth pain sensitive to cold water and chewing', pain: 6 },
+    { label: 'Headache / Tension', text: 'Dull throbbing band-like tension headache and tight neck muscles', pain: 4 },
+    { label: 'Fever & Sore Throat', text: 'Fever 101F, body chills, sore throat, and painful swallowing', pain: 5 },
+    { label: 'Itchy Skin Rash', text: 'Red itchy bumps on skin after touching plant or new soap', pain: 3 },
+    { label: 'Bleeding Cut / Scrape', text: 'Fell and scraped knee, superficial bleeding and stinging pain', pain: 4 },
+    { label: 'Stomach Ache', text: 'Sudden stomach cramps, bloating, and mild nausea after food', pain: 5 },
   ];
 
   const handleFile = (file: File) => {
@@ -78,19 +79,20 @@ export const InputForm: React.FC<InputFormProps> = ({
     }
   };
 
-  const addSymptomTag = (tag: string) => {
-    if (symptoms.includes(tag)) return;
-    const newText = symptoms ? `${symptoms.trim()}, ${tag}` : tag;
-    onSymptomsChange(newText);
+  const selectQuickSymptom = (item: { label: string; text: string; pain: number }) => {
+    onSymptomsChange(item.text);
+    onPainLevelChange(item.pain);
   };
 
-  const getPainDescriptor = (val: number) => {
-    if (val === 0) return { label: 'No Pain (0/10)', color: 'text-slate-500' };
-    if (val <= 3) return { label: `Mild Discomfort (${val}/10)`, color: 'text-emerald-600 dark:text-emerald-400' };
-    if (val <= 6) return { label: `Moderate Pain (${val}/10)`, color: 'text-amber-600 dark:text-amber-400' };
-    if (val <= 8) return { label: `Severe Pain (${val}/10)`, color: 'text-orange-600 dark:text-orange-400' };
-    return { label: `Intense / Acute Pain (${val}/10)`, color: 'text-rose-600 dark:text-rose-400 font-bold' };
+  const getPainDetails = (val: number) => {
+    if (val === 0) return { label: 'No Pain', emoji: <Smile className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />, color: 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800' };
+    if (val <= 3) return { label: 'Mild', emoji: <Smile className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />, color: 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800' };
+    if (val <= 6) return { label: 'Moderate', emoji: <Meh className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />, color: 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800' };
+    if (val <= 8) return { label: 'Severe', emoji: <Frown className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />, color: 'text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800' };
+    return { label: 'Critical', emoji: <AlertOctagon className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 animate-bounce" />, color: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800' };
   };
+
+  const painInfo = getPainDetails(painLevel);
 
   const durationOptions = [
     'Just happened (< 30 mins)',
@@ -98,41 +100,61 @@ export const InputForm: React.FC<InputFormProps> = ({
     'Today (4 - 12 hours)',
     '1 - 2 days ago',
     '3 - 7 days ago',
-    'Chronic (> 1 week)',
+    'Over a week ago',
   ];
 
   return (
     <section
-      id="streamlit-input-container"
-      aria-labelledby="heading-clinical-input"
-      className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 md:p-6 shadow-sm space-y-6"
+      id="mr-health-input-container"
+      aria-labelledby="heading-symptom-input"
+      className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-2xs space-y-3"
     >
-      {/* Streamlit Form Title Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-mono text-xs font-semibold uppercase">
-              st.form
-            </span>
-            <h2 id="heading-clinical-input" className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Clinical Assessment & Injury Input
-            </h2>
+      {/* Header bar */}
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2.5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-cyan-100 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-400 flex items-center justify-center border border-cyan-200 dark:border-cyan-800 shadow-2xs">
+            <Bot className="w-4 h-4" />
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Provide symptom text description and/or upload an injury photo for 5-point evaluation.
-          </p>
+          <div>
+            <h2 id="heading-symptom-input" className="text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-none">
+              Symptom Assessment
+            </h2>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">
+              Describe what happened or pick a quick tag below
+            </span>
+          </div>
         </div>
 
         <button
-          id="btn-reset-form"
+          id="btn-reset-input"
           type="button"
           onClick={onReset}
           disabled={isLoading || (!symptoms && !selectedImage)}
-          className="self-start sm:self-auto text-xs text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 disabled:opacity-30 flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+          className="text-[11px] text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 disabled:opacity-30 flex items-center gap-1 py-1 px-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
         >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Reset Form
+          <RotateCcw className="w-3 h-3" />
+          Clear
         </button>
+      </div>
+
+      {/* Quick Tap Symptom Ideas - Tight Gap */}
+      <div className="space-y-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
+          <Sparkles className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
+          Quick Select:
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {quickSymptoms.map((item, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => selectQuickSymptom(item)}
+              className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-cyan-50 dark:hover:bg-cyan-950/60 text-slate-700 dark:text-slate-300 hover:text-cyan-800 dark:hover:text-cyan-300 border border-slate-200 dark:border-slate-700/60 transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center gap-1"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <form
@@ -140,171 +162,71 @@ export const InputForm: React.FC<InputFormProps> = ({
           e.preventDefault();
           onSubmit();
         }}
-        className="space-y-6"
+        className="space-y-3"
       >
         {/* 1. Symptoms Text Area */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           <div className="flex items-center justify-between">
             <label
               htmlFor="textarea-symptoms"
-              className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5"
+              className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5"
             >
-              <Activity className="w-4 h-4 text-rose-500" />
-              <span>1. Describe Symptoms & How Injury Occurred *</span>
+              <Activity className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+              <span>Describe Symptoms</span>
             </label>
-            <span className="text-[11px] text-slate-400 font-mono">
+            <span className="text-[10px] text-slate-400 font-mono">
               {symptoms.length} chars
             </span>
           </div>
 
-          <textarea
-            id="textarea-symptoms"
-            rows={4}
-            value={symptoms}
-            onChange={(e) => onSymptomsChange(e.target.value)}
-            placeholder="e.g., Twisted my right ankle stepping off stairs. Swelling developed within 15 minutes, throbbing pain when standing, skin is warm and tender to touch..."
-            className="w-full p-3.5 text-sm bg-slate-50/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 focus:outline-none transition leading-relaxed"
-          />
-
-          {/* Quick Tag Suggestion Chips */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[11px] text-slate-400 font-medium mr-1 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-500" /> Quick tags:
-            </span>
-            {quickSymptomTags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => addSymptomTag(tag)}
-                className="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200/80 dark:border-slate-700/80 transition cursor-pointer"
-              >
-                + {tag}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 2. Pain Scale Slider & Duration in 2 Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
-          {/* Pain Scale Widget */}
-          <div className="p-4 bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/70 rounded-xl space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="input-pain-slider"
-                className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-              >
-                <Sliders className="w-3.5 h-3.5 text-rose-500" />
-                Pain Scale (1 - 10)
-              </label>
-              <span className={`text-xs font-medium ${getPainDescriptor(painLevel).color}`}>
-                {getPainDescriptor(painLevel).label}
-              </span>
-            </div>
-
-            <input
-              id="input-pain-slider"
-              type="range"
-              min="0"
-              max="10"
-              step="1"
-              value={painLevel}
-              onChange={(e) => onPainLevelChange(parseInt(e.target.value, 10))}
-              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-600"
+          <div className="relative rounded-xl bg-slate-50/70 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 focus-within:border-cyan-500 focus-within:bg-white dark:focus-within:bg-slate-950 focus-within:ring-1 focus-within:ring-cyan-500/20 transition-all">
+            <textarea
+              id="textarea-symptoms"
+              rows={2}
+              value={symptoms}
+              onChange={(e) => onSymptomsChange(e.target.value)}
+              placeholder="e.g. I touched a hot pan, skin is stinging with a small blister..."
+              className="w-full bg-transparent p-2.5 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-hidden resize-y min-h-[60px]"
             />
-
-            <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-              <span>0 (None)</span>
-              <span>5 (Moderate)</span>
-              <span>10 (Worst)</span>
-            </div>
-          </div>
-
-          {/* Onset / Duration Widget */}
-          <div className="p-4 bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/70 rounded-xl space-y-2">
-            <label
-              htmlFor="select-duration"
-              className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
-            >
-              <Clock className="w-3.5 h-3.5 text-rose-500" />
-              Onset / Symptom Duration
-            </label>
-
-            <select
-              id="select-duration"
-              value={duration}
-              onChange={(e) => onDurationChange(e.target.value)}
-              className="w-full text-xs py-2.5 px-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-rose-500 focus:outline-none"
-            >
-              {durationOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-            <p className="text-[11px] text-slate-400">
-              Helps differentiate acute trauma from progressive conditions.
-            </p>
           </div>
         </div>
 
-        {/* 3. Injury Photo Upload (st.file_uploader) */}
-        <div className="space-y-2 pt-1">
+        {/* 2. Photo Upload or Camera Zone - Compact */}
+        <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-              <FileImage className="w-4 h-4 text-rose-500" />
-              <span>2. Upload Injury Photo (Optional / Multi-modal)</span>
+            <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <Camera className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Injury Photo (Optional)</span>
             </label>
-            <span className="text-[11px] text-slate-400">Supports JPG, PNG, WEBP</span>
           </div>
 
           {selectedImage ? (
-            /* Selected Image Preview Card */
-            <div
-              id="uploaded-image-preview"
-              className="p-4 bg-rose-50/30 dark:bg-rose-950/20 border-2 border-rose-200 dark:border-rose-900/60 rounded-xl flex flex-col sm:flex-row items-center gap-4 justify-between"
-            >
-              <div className="flex items-center gap-3.5 w-full sm:w-auto">
-                <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-black/10 shrink-0">
-                  <img
-                    src={selectedImage}
-                    alt="Uploaded injury visual"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                    <FileImage className="w-3.5 h-3.5 text-rose-500" />
-                    Injury Image Attached
+            <div className="relative rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/20 p-2.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={selectedImage}
+                  alt="Injury Preview"
+                  className="w-11 h-11 object-cover rounded-lg border border-emerald-300 dark:border-emerald-500/30 shadow-2xs"
+                />
+                <div>
+                  <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-400 block leading-tight">
+                    ✓ Photo Attached
                   </span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Ready for multimodal visual AI assessment
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                    Ready for AI evaluation
                   </p>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button
-                  id="btn-take-another-photo"
-                  type="button"
-                  onClick={() => setIsCameraOpen(true)}
-                  className="py-1.5 px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5"
-                >
-                  <Camera className="w-3.5 h-3.5" />
-                  Retake
-                </button>
-                <button
-                  id="btn-remove-image"
-                  type="button"
-                  onClick={() => onImageChange(null)}
-                  className="py-1.5 px-3 rounded-lg bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-900/60 text-xs font-medium text-rose-700 dark:text-rose-300 flex items-center gap-1"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  Remove
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => onImageChange(null)}
+                className="p-1 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                title="Remove photo"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           ) : (
-            /* Upload Dropzone */
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -312,93 +234,123 @@ export const InputForm: React.FC<InputFormProps> = ({
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+              onClick={() => fileInputRef.current?.click()}
+              className={`rounded-xl border border-dashed p-2.5 text-center cursor-pointer transition-all duration-150 ${
                 isDragging
-                  ? 'border-rose-500 bg-rose-50/50 dark:bg-rose-950/30'
-                  : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 bg-slate-50/40 dark:bg-slate-800/30'
+                  ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/20'
+                  : 'border-slate-300 dark:border-slate-800 hover:border-cyan-400 bg-slate-50/50 dark:bg-slate-950/40'
               }`}
             >
               <input
                 ref={fileInputRef}
-                id="file-upload-injury"
                 type="file"
                 accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    handleFile(e.target.files[0]);
-                  }
-                }}
+                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
                 className="hidden"
               />
 
-              <div className="flex flex-col items-center gap-2.5">
-                <div className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-xs text-rose-500 border border-slate-200 dark:border-slate-700">
-                  <UploadCloud className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Drag and drop your injury photo here, or browse
-                  </p>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Clear lighting and sharp focus help improve model recognition.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                  <button
-                    id="btn-browse-file"
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="py-2 px-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-xs flex items-center gap-2 cursor-pointer"
-                  >
+              <div className="flex items-center justify-between gap-2 px-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-cyan-100 dark:bg-slate-800 text-cyan-700 dark:text-cyan-400 flex items-center justify-center">
                     <UploadCloud className="w-3.5 h-3.5" />
-                    Browse Files
-                  </button>
-                  <span className="text-xs text-slate-400">or</span>
-                  <button
-                    id="btn-open-camera"
-                    type="button"
-                    onClick={() => setIsCameraOpen(true)}
-                    className="py-2 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2 cursor-pointer"
-                  >
-                    <Camera className="w-3.5 h-3.5 text-rose-500" />
-                    Use Device Camera
-                  </button>
+                  </div>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 text-left">
+                    Drop photo or <span className="text-cyan-600 dark:text-cyan-400 font-semibold underline">browse</span>
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCameraOpen(true);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold flex items-center gap-1 border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer"
+                >
+                  <Camera className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
+                  Camera
+                </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Submit Primary CTA */}
-        <div className="pt-3">
-          <button
-            id="btn-submit-assessment"
-            type="submit"
-            disabled={isLoading || (!symptoms.trim() && !selectedImage)}
-            className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-rose-600 via-red-600 to-rose-700 hover:from-rose-700 hover:to-red-800 text-white font-bold text-sm shadow-md shadow-rose-500/25 hover:shadow-rose-500/35 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 cursor-pointer"
-          >
-            {isLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Synthesizing 5-Point Medical Guide with Gemini...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>Generate 5-Point Medical Treatment Guide</span>
-              </>
-            )}
-          </button>
+        {/* 3. Pain Meter & Duration Grid - Compact */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
+          {/* Pain Slider */}
+          <div className="space-y-1 bg-slate-50 dark:bg-slate-950/50 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <Flame className="w-3.5 h-3.5 text-orange-500" />
+                Pain Scale
+              </label>
+              <div className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border flex items-center gap-1 ${painInfo.color}`}>
+                {painInfo.emoji}
+                <span>{painLevel}/10 ({painInfo.label})</span>
+              </div>
+            </div>
+
+            <input
+              type="range"
+              min="0"
+              max="10"
+              step="1"
+              value={painLevel}
+              onChange={(e) => onPainLevelChange(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-600 dark:accent-cyan-400"
+            />
+          </div>
+
+          {/* Duration Selector */}
+          <div className="space-y-1 bg-slate-50 dark:bg-slate-950/50 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800/80">
+            <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-indigo-500" />
+              Duration / When Occurred
+            </label>
+            <select
+              value={duration}
+              onChange={(e) => onDurationChange(e.target.value)}
+              className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-hidden"
+            >
+              {durationOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {/* Action Button */}
+        <button
+          id="btn-ask-mr-health-ai"
+          type="submit"
+          disabled={isLoading || (!symptoms.trim() && !selectedImage)}
+          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-600 via-teal-600 to-blue-600 hover:from-cyan-500 hover:via-teal-500 hover:to-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm shadow-md shadow-cyan-600/20 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+        >
+          {isLoading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Analyzing symptoms with Mr Health AI...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              <span>Ask Mr Health AI (Get 5-Point Guide)</span>
+            </>
+          )}
+        </button>
       </form>
 
       {/* Camera Capture Modal */}
-      <CameraCaptureModal
-        isOpen={isCameraOpen}
-        onClose={() => setIsCameraOpen(false)}
-        onCapture={(img) => onImageChange(img, 'image/jpeg')}
-      />
+      {isCameraOpen && (
+        <CameraCaptureModal
+          onCapture={(dataUrl) => {
+            onImageChange(dataUrl, 'image/jpeg');
+            setIsCameraOpen(false);
+          }}
+          onClose={() => setIsCameraOpen(false)}
+        />
+      )}
     </section>
   );
 };

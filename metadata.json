@@ -1,6 +1,6 @@
 {
-  "name": "Medical Treatment Recommender",
-  "description": "A Streamlit-style medical treatment and first-aid recommender providing a structured 5-point guide (Cause, Effect, Reason, Treatment, Diet) from symptom inputs and injury images for academic demo purposes.",
+  "name": "Mr Health AI",
+  "description": "Mr Health AI - Smart Health & First-Aid Assistant providing simple 5-Point guides (Cause, Effect, Reason, Treatment, Diet) from symptom descriptions and photos.",
   "requestFramePermissions": [
     "camera"
   ],
