@@ -1,0 +1,10 @@
+{
+  "name": "Medical Treatment Recommender",
+  "description": "A Streamlit-style medical treatment and first-aid recommender providing a structured 5-point guide (Cause, Effect, Reason, Treatment, Diet) from symptom inputs and injury images for academic demo purposes.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
