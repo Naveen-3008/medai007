@@ -11,8 +11,7 @@ import {
   ShieldCheck,
   Globe,
   Languages,
-  Hospital,
-  MapPin
+  Hospital
 } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { InputForm } from './components/InputForm';
@@ -33,7 +32,6 @@ export default function App() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
-  const [showLocator, setShowLocator] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentAssessment, setCurrentAssessment] = useState<MedicalAssessment | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -190,240 +188,198 @@ export default function App() {
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors duration-150 selection:bg-cyan-500 selection:text-white w-full">
-        {/* Full-width Top Header */}
-        <header
-          id="app-header"
-          className="sticky top-0 z-30 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200/90 dark:border-slate-800 shadow-2xs w-full px-4 sm:px-6 lg:px-8"
-        >
-          <div className="w-full h-14 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              {/* Sidebar toggle button */}
-              <button
-                id="btn-toggle-sidebar"
-                type="button"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
-                aria-label="Toggle menu"
-                title="Open menu & history"
-              >
-                <Menu className="w-4 h-4 text-cyan-600" />
-                <span className="hidden sm:inline">{language === 'Tamil' ? 'பட்டியல்' : 'Menu'}</span>
-              </button>
-
-              {/* Logo & Title */}
+      <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col font-sans transition-colors duration-150 selection:bg-cyan-500 selection:text-white">
+        
+        {/* Centered Mobile-App Shell Frame */}
+        <div className="w-full max-w-lg md:max-w-xl mx-auto min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col shadow-2xl border-x border-slate-200/80 dark:border-slate-800">
+          
+          {/* Mobile App Header */}
+          <header
+            id="mobile-app-header"
+            className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 py-3 shadow-2xs"
+          >
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-xs shadow-cyan-600/20">
-                  <Bot className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h1 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight leading-none">
+                <button
+                  id="btn-toggle-sidebar"
+                  type="button"
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer"
+                  aria-label="Menu"
+                >
+                  <Menu className="w-4 h-4 text-cyan-600" />
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-xs shadow-cyan-600/25">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h1 className="font-black text-sm text-slate-900 dark:text-white leading-tight">
                       Mr Health AI
                     </h1>
-                    <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800">
-                      {language === 'Tamil' ? '5-புள்ளி வழிகாட்டி' : '5-Point Guide'}
-                    </span>
+                    <p className="text-[10px] text-cyan-700 dark:text-cyan-400 font-bold">
+                      {language === 'Tamil' ? '5-புள்ளி சுகாதார வழிகாட்டி' : '5-Point Health Guide'}
+                    </p>
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                    {language === 'Tamil' ? 'ஸ்மார்ட் சுகாதார & முதலுதவி AI' : 'Smart Health & First-Aid Assistant'}
-                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Right Badges & Controls */}
-            <div className="flex items-center gap-2">
-              {/* Quick Hospital / Pharmacy Locator Toggle */}
-              <button
-                id="btn-top-nearby-care"
-                type="button"
-                onClick={() => setShowLocator(!showLocator)}
-                className={`p-1.5 sm:px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
-                  showLocator
-                    ? 'bg-rose-600 text-white border-rose-600 shadow-xs shadow-rose-600/20'
-                    : 'bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/50'
-                }`}
-                title={language === 'Tamil' ? 'அருகிலுள்ள மருத்துவமனை மற்றும் மருந்தகங்கள்' : 'Nearby 24/7 Hospitals & Pharmacy'}
-              >
-                <Hospital className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">
-                  {language === 'Tamil' ? 'அருகிலுள்ள மருத்துவமனை & மருந்தகம்' : 'Nearby Hospitals & Pharmacy'}
-                </span>
-              </button>
+              {/* Header Right Actions */}
+              <div className="flex items-center gap-1.5">
+                {/* Language Toggle Pill */}
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => handleLanguageChange('English')}
+                    disabled={isTranslating}
+                    className={`px-2 py-1 rounded-lg transition cursor-pointer text-xs ${
+                      language === 'English'
+                        ? 'bg-white dark:bg-slate-700 text-cyan-700 dark:text-cyan-300 shadow-2xs font-extrabold'
+                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleLanguageChange('Tamil')}
+                    disabled={isTranslating}
+                    className={`px-2 py-1 rounded-lg transition cursor-pointer text-xs ${
+                      language === 'Tamil'
+                        ? 'bg-white dark:bg-slate-700 text-cyan-700 dark:text-cyan-300 shadow-2xs font-extrabold'
+                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                    }`}
+                  >
+                    தமிழ்
+                  </button>
+                </div>
 
-              {/* Direct Quick Language Toggle (English | தமிழ்) with active translation state */}
-              <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold shadow-2xs">
+                {/* Theme toggle */}
                 <button
                   type="button"
-                  onClick={() => handleLanguageChange('English')}
-                  disabled={isTranslating}
-                  className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
-                    language === 'English'
-                      ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-400 shadow-2xs font-extrabold'
-                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-                  }`}
-                  title="Switch to English"
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition cursor-pointer"
+                  title="Toggle theme"
                 >
-                  English
+                  {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
                 </button>
+
+                {/* Reset button */}
                 <button
+                  id="btn-top-reset"
                   type="button"
-                  onClick={() => handleLanguageChange('Tamil')}
-                  disabled={isTranslating}
-                  className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
-                    language === 'Tamil'
-                      ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-400 shadow-2xs font-extrabold'
-                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
-                  }`}
-                  title="தமிழுக்கு மாற்றவும் (Switch to Tamil)"
+                  onClick={handleReset}
+                  className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition cursor-pointer"
+                  title="New Case"
                 >
-                  தமிழ்
+                  <RotateCcw className="w-4 h-4" />
                 </button>
               </div>
-
-              {/* Light / Dark Mode Toggle */}
-              <button
-                type="button"
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition cursor-pointer"
-                title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-              >
-                {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-600" />}
-              </button>
-
-              <button
-                id="btn-top-reset"
-                type="button"
-                onClick={handleReset}
-                className="p-1.5 sm:px-3 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1 transition cursor-pointer border border-slate-200 dark:border-slate-800"
-                title="Reset case"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{language === 'Tamil' ? 'புதிய பதிவு' : 'New Case'}</span>
-              </button>
             </div>
-          </div>
-        </header>
+          </header>
 
-        {/* Sidebar Drawer */}
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          language={language}
-          onLanguageChange={(l) => handleLanguageChange(l as 'English' | 'Tamil')}
-          detailLevel={detailLevel}
-          onDetailLevelChange={setDetailLevel}
-          onSelectPreset={handleSelectPreset}
-          history={history}
-          onSelectHistory={handleSelectHistory}
-          onClearHistory={handleClearHistory}
-        />
+          {/* Sidebar Drawer */}
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+            language={language}
+            onLanguageChange={(l) => handleLanguageChange(l as 'English' | 'Tamil')}
+            detailLevel={detailLevel}
+            onDetailLevelChange={setDetailLevel}
+            onSelectPreset={handleSelectPreset}
+            history={history}
+            onSelectHistory={handleSelectHistory}
+            onClearHistory={handleClearHistory}
+          />
 
-        {/* Main Content Layout */}
-        <main
-          id="main-app-content"
-          className="flex-1 w-full px-4 sm:px-6 lg:px-10 py-4 space-y-4 max-w-7xl mx-auto"
-        >
-          {/* Full-width Stretched Hero Banner */}
-          <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-50/90 via-white to-blue-50/70 dark:from-cyan-950/25 dark:via-slate-900 dark:to-slate-900 border border-cyan-100 dark:border-slate-800 p-4 sm:p-5 shadow-2xs w-full">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-600/20 shrink-0">
-                  <Bot className="w-6 h-6" />
+          {/* Main Mobile App Stream */}
+          <main className="p-4 space-y-3.5 flex-1">
+            
+            {/* Friendly Greeting Card */}
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-cyan-50 via-white to-blue-50/60 dark:from-slate-800 dark:via-slate-800/90 dark:to-slate-800 border border-cyan-100 dark:border-slate-700 shadow-2xs space-y-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-xs shadow-cyan-600/20 shrink-0">
+                  <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white leading-tight">
                     {language === 'Tamil' ? 'வணக்கம், நான் Mr Health AI!' : 'Hello, I am Mr Health AI!'}
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
                     {language === 'Tamil'
-                      ? 'உங்கள் அறிகுறிகளைக் குறிப்பிடவும் அல்லது புகைப்படத்தை பதிவேற்றவும். எளிய 5-புள்ளி வழிகாட்டியை உடனே பெறுங்கள்.'
-                      : 'Enter your symptoms or upload an injury photo for an instant, simple 5-point recovery guide.'}
+                      ? 'அறிகுறிகளைக் கூறி உடனடி 5-புள்ளி வழிகாட்டியைப் பெறுங்கள்.'
+                      : 'Enter symptoms or upload a photo for a 5-point guide.'}
                   </p>
                 </div>
               </div>
 
-              {/* 5 Points preview badges */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <div className="py-1 px-2.5 rounded-lg bg-white dark:bg-slate-950/60 border border-indigo-200 dark:border-indigo-900/40 text-xs font-bold text-indigo-700 dark:text-indigo-300 shadow-2xs">
-                  🎯 {language === 'Tamil' ? '1. காரணம்' : '1. Cause'}
-                </div>
-                <div className="py-1 px-2.5 rounded-lg bg-white dark:bg-slate-950/60 border border-sky-200 dark:border-sky-900/40 text-xs font-bold text-sky-700 dark:text-sky-300 shadow-2xs">
-                  ⚡ {language === 'Tamil' ? '2. தாக்கம்' : '2. Effect'}
-                </div>
-                <div className="py-1 px-2.5 rounded-lg bg-white dark:bg-slate-950/60 border border-emerald-200 dark:border-emerald-900/40 text-xs font-bold text-emerald-700 dark:text-emerald-300 shadow-2xs">
-                  🧬 {language === 'Tamil' ? '3. ஏன் ஏற்படுகிறது' : '3. Reason'}
-                </div>
-                <div className="py-1 px-2.5 rounded-lg bg-white dark:bg-slate-950/60 border border-rose-200 dark:border-rose-900/40 text-xs font-bold text-rose-700 dark:text-rose-300 shadow-2xs">
-                  🩹 {language === 'Tamil' ? '4. சிகிச்சை & முதலுதவி' : '4. Treatment'}
-                </div>
-                <div className="py-1 px-2.5 rounded-lg bg-white dark:bg-slate-950/60 border border-teal-200 dark:border-teal-900/40 text-xs font-bold text-teal-700 dark:text-teal-300 shadow-2xs">
-                  🥗 {language === 'Tamil' ? '5. உணவு & தண்ணீர்' : '5. Diet'}
-                </div>
+              {/* 5-Point Chips */}
+              <div className="flex flex-wrap gap-1 pt-0.5">
+                <span className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[10px] font-bold">
+                  1. {language === 'Tamil' ? 'காரணம்' : 'Cause'}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 text-[10px] font-bold">
+                  2. {language === 'Tamil' ? 'தாக்கம்' : 'Effect'}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold">
+                  3. {language === 'Tamil' ? 'ஏன்' : 'Reason'}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-[10px] font-bold">
+                  4. {language === 'Tamil' ? 'சிகிச்சை' : 'Treatment'}
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 text-[10px] font-bold">
+                  5. {language === 'Tamil' ? 'உணவு' : 'Diet'}
+                </span>
               </div>
             </div>
-          </section>
 
-          {/* Nearby Care & Pharmacy Locator Banner when toggled */}
-          {showLocator && (
+            {/* Compact Hospital & Pharmacy Map Card */}
             <NearbyCareLocator
               language={language}
               severity={currentAssessment?.severity}
             />
-          )}
 
-          {/* Error Alert Callout if needed */}
-          {error && (
-            <div
-              id="alert-submission-error"
-              role="alert"
-              className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs flex items-start gap-2.5 shadow-2xs w-full"
-            >
-              <div className="w-2 h-2 rounded-full bg-rose-500 mt-1 shrink-0" />
-              <div>
-                <strong className="font-bold text-rose-900 dark:text-rose-100">{language === 'Tamil' ? 'அறிவிப்பு: ' : 'Notice: '}</strong>
+            {/* Error Callout if needed */}
+            {error && (
+              <div
+                role="alert"
+                className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs flex items-start gap-2 shadow-2xs"
+              >
+                <div className="w-2 h-2 rounded-full bg-rose-500 mt-1 shrink-0" />
                 <span>{error}</span>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Input Form with Language awareness and Translation Status */}
-          <InputForm
-            language={language}
-            isTranslating={isTranslating}
-            symptoms={symptoms}
-            onSymptomsChange={setSymptoms}
-            painLevel={painLevel}
-            onPainLevelChange={setPainLevel}
-            duration={duration}
-            onDurationChange={setDuration}
-            selectedImage={selectedImage}
-            onImageChange={(img, mime) => {
-              setSelectedImage(img);
-              if (mime) setMimeType(mime);
-            }}
-            onSubmit={handleSubmit}
-            onReset={handleReset}
-            isLoading={isLoading}
-          />
+            {/* Input Card Form */}
+            <InputForm
+              language={language}
+              isTranslating={isTranslating}
+              symptoms={symptoms}
+              onSymptomsChange={setSymptoms}
+              painLevel={painLevel}
+              onPainLevelChange={setPainLevel}
+              duration={duration}
+              onDurationChange={setDuration}
+              selectedImage={selectedImage}
+              onImageChange={(img, mime) => {
+                setSelectedImage(img);
+                if (mime) setMimeType(mime);
+              }}
+              onSubmit={handleSubmit}
+              onReset={handleReset}
+              isLoading={isLoading}
+            />
 
-          {/* Results Display */}
-          {currentAssessment && (
-            <>
+            {/* Assessment Guide Results */}
+            {currentAssessment && (
               <GuideResults
                 assessment={currentAssessment}
                 attachedImagePreview={selectedImage}
               />
-
-              {/* Automatic Nearby Care Locator inside results */}
-              <NearbyCareLocator
-                language={language}
-                severity={currentAssessment.severity}
-              />
-            </>
-          )}
-        </main>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
