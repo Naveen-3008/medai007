@@ -7,10 +7,7 @@ import {
   ChevronRight,
   Trash2,
   X,
-  Bot,
-  Hospital,
-  Pill,
-  ExternalLink
+  Bot
 } from 'lucide-react';
 import { PRESET_CASES } from '../data/presets';
 import { HistoryItem, PresetCase } from '../types';
@@ -45,10 +42,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { code: 'English', label: 'English' },
     { code: 'Tamil', label: 'தமிழ் (Tamil)' },
   ];
-
-  const openMaps = (query: string) => {
-    window.open(`https://www.google.com/maps/search/${encodeURIComponent(query)}`, '_blank', 'noopener,noreferrer');
-  };
 
   return (
     <>
@@ -95,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <div className="p-4 space-y-5 flex-1 text-sm text-slate-700 dark:text-slate-300">
-          {/* Language Selector (Only English & Tamil) */}
+          {/* Language Selector */}
           <section className="space-y-2">
             <label className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
               <Globe className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
@@ -116,43 +109,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {l.label}
                 </button>
               ))}
-            </div>
-          </section>
-
-          {/* Quick Nearby Places on Google Maps */}
-          <section className="space-y-2">
-            <label className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-              <Hospital className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-              {isTamil ? 'அருகிலுள்ள இடங்கள்' : 'Nearby on Google Maps'}
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => openMaps('nearest 24/7 emergency hospital')}
-                className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100 text-left transition cursor-pointer flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between text-rose-700 dark:text-rose-400">
-                  <Hospital className="w-4 h-4" />
-                  <ExternalLink className="w-3 h-3" />
-                </div>
-                <span className="text-[11px] font-bold text-slate-900 dark:text-white mt-1">
-                  {isTamil ? 'மருத்துவமனை' : 'Hospitals'}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => openMaps('nearest 24 hours pharmacy medical store')}
-                className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-100 text-left transition cursor-pointer flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
-                  <Pill className="w-4 h-4" />
-                  <ExternalLink className="w-3 h-3" />
-                </div>
-                <span className="text-[11px] font-bold text-slate-900 dark:text-white mt-1">
-                  {isTamil ? 'மருந்தகம்' : 'Pharmacies'}
-                </span>
-              </button>
             </div>
           </section>
 
