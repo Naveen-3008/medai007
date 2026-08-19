@@ -21,7 +21,7 @@ function getGeminiClient(): GoogleGenAI | null {
   });
 }
 
-function generateClinicalFallback(
+function generateSimpleFallback(
   symptoms: string,
   painLevel: number = 4,
   duration: string = 'Recent',
@@ -29,125 +29,173 @@ function generateClinicalFallback(
 ) {
   const lower = (symptoms || '').toLowerCase();
 
-  let condition = 'Superficial Soft Tissue Strain / Localized Inflammatory Response';
-  let category = 'Musculoskeletal / General Trauma';
-  let severity = 'Mild';
-  let rationale = 'Symptoms present localized discomfort without overt systemic distress, gross deformity, or severe neurovascular compromise.';
+  let condition = 'Mild Muscle or Tissue Strain';
+  let category = 'First Aid & Home Care';
+  let severity: 'Mild' | 'Moderate' | 'Severe / Seek Emergency Care' = 'Mild';
+  let rationale = `Mild discomfort rated ${painLevel}/10. Can usually be managed at home with simple care.`;
+  let causeSummary = `Caused by sudden movement, physical strain, or minor irritation.`;
+  let effectSummary = `You may feel soreness, mild swelling, or tenderness when moving.`;
+  let reasonSummary = `When tissue gets irritated, your body sends extra blood to the area to protect and heal it, which causes swelling and soreness.`;
+  let firstAid = [
+    'Rest: Stop any activity that hurts and rest the sore area.',
+    'Ice / Cold: Put a cool ice pack wrapped in a cloth on the area for 15 minutes at a time.',
+    'Elevate: Prop the area up on pillows if it is swollen.',
+  ];
+  let clinicalTreatments = [
+    'Ask a pharmacist about simple pain relief medicines like acetaminophen or ibuprofen if needed.',
+    'Use an elastic bandage wrap gently for extra support.',
+  ];
+  let warnings = [
+    'DO NOT push through severe pain or do heavy lifting.',
+    'DO NOT apply bare ice directly onto your skin.',
+  ];
+  let dietFoods = [
+    'Drink plenty of plain water to stay well-hydrated.',
+    'Eat protein-rich foods like eggs, yogurt, or chicken to help your body repair.',
+    'Eat fresh fruits like oranges and berries for natural vitamins.',
+  ];
+  let avoidFoods = [
+    'Avoid junk food, high sugar snacks, and soda which can slow down recovery.',
+    'Limit salty snacks that make swelling worse.',
+  ];
 
-  if (lower.includes('burn') || lower.includes('steam') || lower.includes('heat') || lower.includes('scald')) {
-    condition = 'Superficial Partial-Thickness Thermal Burn';
-    category = 'Thermal Injury / Dermatology';
+  if (lower.includes('burn') || lower.includes('steam') || lower.includes('heat') || lower.includes('scald') || lower.includes('fire')) {
+    condition = 'Minor Heat Burn / Scald';
+    category = 'Burn Care';
     severity = painLevel >= 7 ? 'Moderate' : 'Mild';
-    rationale = 'Thermal exposure causing localized epidermal erythema and potential superficial vesiculation without charred subdermal tissue.';
-  } else if (lower.includes('sprain') || lower.includes('ankle') || lower.includes('twist') || lower.includes('pop')) {
-    condition = 'Grade I-II Inversion Ankle Ligamentous Sprain';
-    category = 'Orthopedic / Sports Medicine';
+    rationale = 'Skin is red and sore from contact with heat or hot liquid.';
+    causeSummary = 'Contact with a hot surface, hot liquid, or steam.';
+    effectSummary = 'Red skin, stinging pain, and possible small fluid blisters.';
+    reasonSummary = 'Heat damages the top layer of skin. Your body rushes fluid to the burn to cool and protect the tissue below.';
+    firstAid = [
+      'Cool Water Immediately: Run cool tap water over the burn for 10 to 20 minutes.',
+      'Remove tight rings, watches, or clothing before the area starts to swell.',
+      'Cover gently with a clean, loose, non-stick bandage or plastic wrap.',
+    ];
+    warnings = [
+      'DO NOT put ice, butter, oil, or toothpaste on a burn.',
+      'DO NOT pop or peel any blisters.',
+    ];
+    dietFoods = ['Drink extra water', 'Eat foods high in Vitamin C (citrus, berries)', 'Eat lean proteins (eggs, beans, fish)'];
+    avoidFoods = ['Avoid spicy foods', 'Limit salty snacks'];
+  } else if (lower.includes('sprain') || lower.includes('ankle') || lower.includes('twist') || lower.includes('foot')) {
+    condition = 'Twisted Ankle / Sprain';
+    category = 'Joint & Muscle Care';
     severity = painLevel >= 8 ? 'Moderate' : 'Mild';
-    rationale = 'Excessive tensile stress across anterior talofibular ligament resulting in localized microtrauma and inflammatory edema.';
-  } else if (lower.includes('rash') || lower.includes('itch') || lower.includes('allergy') || lower.includes('dermatitis')) {
-    condition = 'Acute Contact Dermatitis / Erythematous Urticaria';
-    category = 'Immunological / Dermatology';
-    severity = 'Mild';
-    rationale = 'Type IV cell-mediated or IgE-mediated cutaneous hyper-reactivity triggered by contact allergen or irritant.';
-  } else if (lower.includes('scrape') || lower.includes('cut') || lower.includes('abrasion') || lower.includes('bleed')) {
-    condition = 'Superficial Mechanical Cutaneous Abrasion';
-    category = 'Wound Care / Trauma';
-    severity = 'Mild';
-    rationale = 'Mechanical friction shearing stratum corneum and superficial papillary dermis.';
-  } else if (lower.includes('headache') || lower.includes('temple') || lower.includes('neck') || lower.includes('strain')) {
-    condition = 'Tension-Type Cephalea & Cervical Myofascial Strain';
-    category = 'Neurology / Ergonomics';
-    severity = 'Mild';
-    rationale = 'Prolonged sustained pericranial muscle contraction and ergonomic posture strain.';
+    rationale = 'The ankle was twisted beyond its normal range, causing swelling.';
+    causeSummary = 'Twisting or rolling the foot awkwardly while walking, running, or playing sports.';
+    effectSummary = 'Swelling, bruising, and pain when trying to put weight on the foot.';
+    reasonSummary = 'The strong bands (ligaments) holding your ankle bones together were overstretched, causing minor swelling and fluid buildup.';
+    firstAid = [
+      'Rest: Avoid walking on the injured foot as much as possible.',
+      'Ice: Apply an ice pack wrapped in a towel for 15-20 minutes every few hours.',
+      'Compress: Wrap gently with an elastic bandage for support (not too tight).',
+      'Elevate: Keep your foot propped up on cushions above heart level.',
+    ];
+    warnings = [
+      'DO NOT walk or run through sharp pain.',
+      'DO NOT use hot baths or heating pads during the first 2 days.',
+    ];
+  } else if (lower.includes('tooth') || lower.includes('dental') || lower.includes('gum') || lower.includes('jaw')) {
+    condition = 'Toothache / Gum Irritation';
+    category = 'Dental Care';
+    severity = painLevel >= 7 ? 'Moderate' : 'Mild';
+    rationale = 'Discomfort originating from tooth enamel, gums, or nerve sensitivity.';
+    causeSummary = 'Tooth decay, food stuck between teeth, gum irritation, or sensitivity to hot/cold.';
+    effectSummary = 'Throbbing ache in the mouth, sensitivity when eating or drinking.';
+    reasonSummary = 'The nerve inside or around the tooth gets irritated by bacteria, temperature, or pressure.';
+    firstAid = [
+      'Rinse your mouth gently with warm salt water (1/2 teaspoon of salt in a glass of warm water).',
+      'Floss gently to remove any food particles stuck between teeth.',
+      'Put an ice pack wrapped in a towel on your cheek for 15 minutes to reduce swelling.',
+    ];
+    warnings = [
+      'DO NOT place aspirin tablets directly against your gums (it burns the skin).',
+      'DO NOT bite down on hard ice, candy, or very sticky food.',
+    ];
+  } else if (lower.includes('fever') || lower.includes('temperature') || lower.includes('chills') || lower.includes('cold') || lower.includes('cough')) {
+    condition = 'Common Viral Infection / Cold & Fever';
+    category = 'General Illness';
+    severity = painLevel >= 7 ? 'Moderate' : 'Mild';
+    rationale = 'Your body is fighting off a common virus or infection.';
+    causeSummary = 'Catching a common cold or viral infection.';
+    effectSummary = 'Feeling warm, shivering, tiredness, body aches, and low energy.';
+    reasonSummary = 'Your brain temporarily raises body temperature to help your immune system fight off viruses and bacteria.';
+    firstAid = [
+      'Rest in bed in a comfortable, quiet room with light blankets.',
+      'Drink lots of fluids like water, warm lemon tea, and clear soups.',
+      'Wipe forehead and neck with a lukewarm (not cold) damp cloth for comfort.',
+    ];
+    warnings = [
+      'DO NOT take ice-cold showers (causes shivering and raises fever).',
+      'DO NOT give aspirin to children or teenagers.',
+    ];
   }
 
   return {
     conditionName: condition,
     category,
-    severity: (severity as 'Mild' | 'Moderate' | 'Severe / Seek Emergency Care'),
+    severity,
     severityDescription: rationale,
     fivePointGuide: {
       cause: {
-        title: '1. Cause & Precipitating Etiology',
-        summary: `Triggered by direct mechanical, thermal, or environmental stress on localized tissue. Reported context: "${symptoms || 'Acute localized discomfort'}".`,
+        title: '1. Cause',
+        summary: causeSummary,
         details: [
-          'Direct kinetic force, thermal contact, or external irritant exposure exceeding baseline physiological threshold.',
-          'Mechanical over-stretching of connective collagen fibers or micro-vascular shearing.',
-          'Potential contributing factors include fatigue, ergonomic strain, or lack of protective barrier.',
+          `Main trigger: "${symptoms || 'Reported symptom'}".`,
+          'Direct physical strain or everyday exposure that temporarily overloaded the area.',
         ],
       },
       effect: {
-        title: '2. Bodily Manifestations & Symptomatic Effects',
-        summary: `Elicits localized inflammatory triad: pain sensation (rated ${painLevel}/10), localized swelling, and reactive sensitivity.`,
+        title: '2. Effect on Body',
+        summary: effectSummary,
         details: [
-          'Localized nociceptor activation transmitting acute pain signals via peripheral A-delta and C nerve fibers.',
-          'Micro-vascular permeability leading to interstitial fluid pooling (edema/swelling).',
-          'Transient limitation in active range of motion or protective muscular guarding around the affected zone.',
+          `Pain level rated around ${painLevel}/10.`,
+          'Mild temporary swelling, tenderness, and stiffness.',
         ],
       },
       reason: {
-        title: '3. Underlying Biological & Pathophysiological Mechanism',
-        summary: 'Cellular damage triggers mast-cell degranulation and the release of histamine, prostaglandins, and bradykinin.',
+        title: '3. Why It Happens',
+        summary: reasonSummary,
         details: [
-          'Arteriolar vasodilation increases localized blood flow, producing heat (calor) and redness (rubor).',
-          'Prostaglandin E2 sensitizes peripheral nociceptive nerve endings, lowering mechanical pain thresholds.',
-          'Leukocyte extravasation commences natural cellular phagocytosis to clear micro-debris and initiate fibroblast collagen synthesis.',
+          'Your body naturally sends extra blood and immune cells to repair the irritated spot.',
+          'Nerve endings send quick pain signals to tell your brain to protect the area while it heals.',
         ],
       },
       treatment: {
-        title: '4. Treatment & First-Aid Protocol',
-        immediateFirstAid: [
-          'Rest & Protection: Protect the affected site from further mechanical weight or thermal re-exposure.',
-          'Cryotherapy / Cooling: Apply cool compresses for 15-20 minutes at a time (never apply bare ice directly).',
-          'Gentle Compression & Elevation: Apply an elastic wrap and elevate limb above heart level.',
-          'Wound Hygiene: If skin is abraded, irrigate gently with clean potable water or sterile saline.',
-        ],
+        title: '4. Treatment & What To Do',
+        immediateFirstAid: firstAid,
         clinicalTreatments: [
-          'Supportive non-steroidal anti-inflammatory agents under medical/pharmacist guidance if appropriate.',
-          'Topical soothing hydrogel, calamine, or petroleum barrier ointment for superficial abrasions.',
-          'Protective splinting or elastic support brace to limit aggravating biomechanical load.',
+          'Simple over-the-counter pain relief from a pharmacist if recommended.',
+          'Gentle supportive wrapping or resting posture.',
         ],
-        warnings: [
-          'DO NOT pop or de-roof intact blisters.',
-          'DO NOT apply direct extreme heat or vigorously massage actively inflamed acute sprains.',
-          'DO NOT ignore increasing redness, expanding heat, or red streaks extending toward the core.',
-        ],
+        warnings: warnings,
       },
       diet: {
-        title: '5. Nutritional Support & Healing Diet',
-        recommendedFoods: [
-          'Lean Protein (eggs, tofu, poultry, legumes) to provide amino acids for collagen synthesis.',
-          'Vitamin C rich foods (citrus fruits, bell peppers, berries, kiwi) to support enzymatic hydroxylation in tissue repair.',
-          'Zinc & Omega-3 Fatty Acids (wild salmon, chia seeds, walnuts, pumpkin seeds) to modulate inflammatory cascade.',
-          'Antioxidant-dense leafy greens (spinach, kale) and cruciferous vegetables.',
-        ],
-        foodsToAvoid: [
-          'Ultra-processed foods high in refined sugars and trans-fats that perpetuate systemic pro-inflammatory cytokines.',
-          'Excess sodium intake that can exacerbate dependent interstitial fluid retention/edema.',
-          'Alcohol and excessive caffeine which impair cellular hydration and sleep-mediated tissue regeneration.',
-        ],
-        hydrationGuidance: 'Maintain 2.0 to 2.5 Liters of water daily with balanced electrolytes.',
+        title: '5. Healing Diet & Water',
+        recommendedFoods: dietFoods,
+        foodsToAvoid: avoidFoods,
+        hydrationGuidance: 'Drink 6 to 8 glasses of fresh water daily to stay hydrated and support fast recovery.',
       },
     },
     whenToSeekDoctor: [
-      'Inability to bear any weight on joint or palpable bony tenderness.',
-      'Expanding redness, warmth, foul-smelling drainage, or fever.',
-      'Sudden numbness, tingling, cyanosis (blue/pale skin), or loss of distal pulse.',
-      'Uncontrollable severe pain unresponsive to standard first-aid measures.',
+      'Pain gets much worse after 24-48 hours instead of getting better.',
+      'You develop a high fever, severe spreading redness, or foul discharge.',
+      'You feel sudden numbness, dizziness, or difficulty breathing.',
     ],
-    disclaimer: 'This 5-point report is produced exclusively for academic demonstration and computational reasoning simulation. It is not professional medical advice, clinical diagnosis, or emergency triage. Always consult a licensed physician.',
+    disclaimer: 'This 5-point guide is for simple learning and educational purposes only. It is not a replacement for a doctor. Always check with a healthcare professional if you are worried.',
     analyzedAt: new Date().toISOString(),
   };
 }
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', model: 'gemini-flash-latest', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', model: 'gemini-3.1-flash-lite', timestamp: new Date().toISOString() });
 });
 
 app.post('/api/recommend', async (req, res) => {
   try {
     const {
-      symptoms,
+      symptoms = '',
       painLevel = 4,
       duration = '1 - 3 hours ago',
       language = 'English',
@@ -163,134 +211,145 @@ app.post('/api/recommend', async (req, res) => {
     const ai = getGeminiClient();
 
     if (ai) {
-      try {
-        const systemInstruction = `You are a clinical decision-support and first-aid advisory AI designed strictly for academic demonstration and educational triage purposes.
-Generate a comprehensive, highly stable, evidence-based 5-Point Simplified Medical Guide:
-1. Cause: What caused or triggered this injury / condition?
-2. Effect: What is the physiological impact and symptomatic effect on the body?
-3. Reason: What is the underlying biological, pathological, or biomechanical mechanism explaining why this happens?
-4. Treatment: What are the immediate first aid protocols, home supportive measures, clinical management steps, and what NOT to do?
-5. Diet: What nutritional foods, micronutrients, hydration, and dietary precautions promote tissue repair and recovery?
+      const systemInstruction = `You are a helpful, empathetic, first-aid and wellness assistant.
+Your goal is to explain health conditions in SIMPLE, CLEAR, EVERYDAY LANGUAGE (6th-grade reading level).
 
-Language: ${language}. Detail depth: ${detailLevel}.
-Always include an explicit disclaimer stating this output is an academic demonstration and not a substitute for professional medical evaluation.`;
+CRITICAL SIMPLICITY GUIDELINES:
+- Avoid dense medical jargon (e.g., instead of "erythematous dermal vasodilation", say "redness and swelling from increased blood flow"; instead of "odontogenic pulpitis", say "toothache / irritated tooth nerve").
+- Keep explanations short, clear, and direct.
+- Use 2-3 simple, actionable bullet points per section.
+- Follow the 5-Point Guide structure:
+  1. Cause: What caused it in plain words?
+  2. Effect: How does it feel and affect your body?
+  3. Reason: Why does your body react this way in simple terms?
+  4. Treatment: Easy first-aid steps at home, plus what NOT to do.
+  5. Diet: Everyday foods and water intake that help healing, plus foods to avoid.
 
-        const promptText = `Please analyze the following case and provide the structured 5-Point Medical Guide:
-Symptoms description: "${symptoms || 'Visual assessment based on attached image.'}"
-Reported Pain Level: ${painLevel !== undefined ? `${painLevel}/10` : '4/10'}
-Reported Duration/Onset: ${duration || 'Not specified'}
-Response Language: ${language}
-Detail Level: ${detailLevel}`;
+Language: ${language}.
+Always include a simple disclaimer that this is educational advice and to see a doctor for serious issues.`;
 
-        const parts: any[] = [];
-        if (imageBase64) {
-          const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z+]+;base64,/, '');
-          const validMime = mimeType || 'image/jpeg';
-          parts.push({
-            inlineData: {
-              mimeType: validMime,
-              data: cleanBase64,
-            },
-          });
-        }
-        parts.push({ text: promptText });
+      const promptText = `Please analyze this symptom report and provide a simple, easy-to-understand 5-Point Guide:
+Symptom: "${symptoms || 'Assessing based on attached photo.'}"
+Pain Level: ${painLevel}/10
+Duration: ${duration}
+Language: ${language}`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-flash-latest',
-          contents: { parts },
-          config: {
-            systemInstruction,
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                conditionName: { type: Type.STRING },
-                category: { type: Type.STRING },
-                severity: { type: Type.STRING },
-                severityDescription: { type: Type.STRING },
-                fivePointGuide: {
-                  type: Type.OBJECT,
-                  properties: {
-                    cause: {
-                      type: Type.OBJECT,
-                      properties: {
-                        title: { type: Type.STRING },
-                        summary: { type: Type.STRING },
-                        details: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      },
-                      required: ['title', 'summary', 'details'],
-                    },
-                    effect: {
-                      type: Type.OBJECT,
-                      properties: {
-                        title: { type: Type.STRING },
-                        summary: { type: Type.STRING },
-                        details: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      },
-                      required: ['title', 'summary', 'details'],
-                    },
-                    reason: {
-                      type: Type.OBJECT,
-                      properties: {
-                        title: { type: Type.STRING },
-                        summary: { type: Type.STRING },
-                        details: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      },
-                      required: ['title', 'summary', 'details'],
-                    },
-                    treatment: {
-                      type: Type.OBJECT,
-                      properties: {
-                        title: { type: Type.STRING },
-                        immediateFirstAid: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        clinicalTreatments: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        warnings: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      },
-                      required: ['title', 'immediateFirstAid', 'clinicalTreatments', 'warnings'],
-                    },
-                    diet: {
-                      type: Type.OBJECT,
-                      properties: {
-                        title: { type: Type.STRING },
-                        recommendedFoods: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        foodsToAvoid: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        hydrationGuidance: { type: Type.STRING },
-                      },
-                      required: ['title', 'recommendedFoods', 'foodsToAvoid', 'hydrationGuidance'],
-                    },
-                  },
-                  required: ['cause', 'effect', 'reason', 'treatment', 'diet'],
-                },
-                whenToSeekDoctor: { type: Type.ARRAY, items: { type: Type.STRING } },
-                disclaimer: { type: Type.STRING },
-              },
-              required: [
-                'conditionName',
-                'category',
-                'severity',
-                'severityDescription',
-                'fivePointGuide',
-                'whenToSeekDoctor',
-                'disclaimer',
-              ],
-            },
+      const parts: any[] = [];
+      if (imageBase64) {
+        const cleanBase64 = imageBase64.replace(/^data:image\/[a-zA-Z+]+;base64,/, '');
+        const validMime = mimeType || 'image/jpeg';
+        parts.push({
+          inlineData: {
+            mimeType: validMime,
+            data: cleanBase64,
           },
         });
+      }
+      parts.push({ text: promptText });
 
-        if (response.text) {
-          const parsed = JSON.parse(response.text);
-          parsed.analyzedAt = new Date().toISOString();
-          return res.json(parsed);
+      const responseSchema = {
+        type: Type.OBJECT,
+        properties: {
+          conditionName: { type: Type.STRING, description: 'Simple common name of the condition (e.g., Twisted Ankle, Mild Burn, Tension Headache, Toothache)' },
+          category: { type: Type.STRING, description: 'Simple category (e.g., Joint & Muscle, Skin & Burns, Head & Cold, Dental Care)' },
+          severity: { type: Type.STRING, description: 'Mild, Moderate, or Severe / Seek Emergency Care' },
+          severityDescription: { type: Type.STRING, description: 'One short sentence explaining severity in plain words' },
+          fivePointGuide: {
+            type: Type.OBJECT,
+            properties: {
+              cause: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING, description: '1. Cause' },
+                  summary: { type: Type.STRING, description: '1 short simple sentence explaining what caused it' },
+                  details: { type: Type.ARRAY, items: { type: Type.STRING }, description: '2 simple bullet points' },
+                },
+                required: ['title', 'summary', 'details'],
+              },
+              effect: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING, description: '2. Effect on Body' },
+                  summary: { type: Type.STRING, description: '1 short sentence describing how it feels' },
+                  details: { type: Type.ARRAY, items: { type: Type.STRING }, description: '2 simple bullet points' },
+                },
+                required: ['title', 'summary', 'details'],
+              },
+              reason: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING, description: '3. Why It Happens' },
+                  summary: { type: Type.STRING, description: 'Simple explanation of the body healing response' },
+                  details: { type: Type.ARRAY, items: { type: Type.STRING }, description: '2 simple bullet points' },
+                },
+                required: ['title', 'summary', 'details'],
+              },
+              treatment: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING, description: '4. Treatment & What To Do' },
+                  immediateFirstAid: { type: Type.ARRAY, items: { type: Type.STRING }, description: '3 simple, practical first-aid steps' },
+                  clinicalTreatments: { type: Type.ARRAY, items: { type: Type.STRING }, description: '1-2 home care / pharmacist tips' },
+                  warnings: { type: Type.ARRAY, items: { type: Type.STRING }, description: '2 things NOT to do' },
+                },
+                required: ['title', 'immediateFirstAid', 'clinicalTreatments', 'warnings'],
+              },
+              diet: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING, description: '5. Healing Diet & Water' },
+                  recommendedFoods: { type: Type.ARRAY, items: { type: Type.STRING }, description: '3 healthy foods that support healing' },
+                  foodsToAvoid: { type: Type.ARRAY, items: { type: Type.STRING }, description: '2 foods/drinks to avoid' },
+                  hydrationGuidance: { type: Type.STRING, description: 'Simple daily water goal' },
+                },
+                required: ['title', 'recommendedFoods', 'foodsToAvoid', 'hydrationGuidance'],
+              },
+            },
+            required: ['cause', 'effect', 'reason', 'treatment', 'diet'],
+          },
+          whenToSeekDoctor: { type: Type.ARRAY, items: { type: Type.STRING }, description: '3 simple red flag signs to see a doctor' },
+          disclaimer: { type: Type.STRING, description: 'Simple safety disclaimer' },
+        },
+        required: [
+          'conditionName',
+          'category',
+          'severity',
+          'severityDescription',
+          'fivePointGuide',
+          'whenToSeekDoctor',
+          'disclaimer',
+        ],
+      };
+
+      const candidateModels = ['gemini-3.1-flash-lite', 'gemini-3.7-flash'];
+
+      for (const modelName of candidateModels) {
+        try {
+          const response = await ai.models.generateContent({
+            model: modelName,
+            contents: parts,
+            config: {
+              systemInstruction,
+              responseMimeType: 'application/json',
+              responseSchema,
+            },
+          });
+
+          if (response.text) {
+            const cleanText = response.text.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
+            const parsed = JSON.parse(cleanText);
+            parsed.analyzedAt = new Date().toISOString();
+            return res.json(parsed);
+          }
+        } catch (err: any) {
+          console.warn(`[Gemini API] Model ${modelName} error:`, err.message);
         }
-      } catch (geminiError: any) {
-        console.warn('Gemini API error, falling back:', geminiError.message);
-        return res.json(generateClinicalFallback(symptoms, painLevel, duration, language));
       }
     }
 
-    return res.json(generateClinicalFallback(symptoms, painLevel, duration, language));
+    return res.json(generateSimpleFallback(symptoms, painLevel, duration, language));
   } catch (err: any) {
-    return res.json(generateClinicalFallback('General injury or discomfort'));
+    return res.json(generateSimpleFallback('General discomfort'));
   }
 });
 
