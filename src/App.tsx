@@ -10,11 +10,14 @@ import {
   HeartPulse,
   ShieldCheck,
   Globe,
-  Languages
+  Languages,
+  Hospital,
+  MapPin
 } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { InputForm } from './components/InputForm';
 import { GuideResults } from './components/GuideResults';
+import { NearbyCareLocator } from './components/NearbyCareLocator';
 import { MedicalAssessment, HistoryItem, PresetCase } from './types';
 
 export default function App() {
@@ -30,6 +33,7 @@ export default function App() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [showLocator, setShowLocator] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentAssessment, setCurrentAssessment] = useState<MedicalAssessment | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -230,6 +234,24 @@ export default function App() {
 
             {/* Right Badges & Controls */}
             <div className="flex items-center gap-2">
+              {/* Quick Hospital / Pharmacy Locator Toggle */}
+              <button
+                id="btn-top-nearby-care"
+                type="button"
+                onClick={() => setShowLocator(!showLocator)}
+                className={`p-1.5 sm:px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                  showLocator
+                    ? 'bg-rose-600 text-white border-rose-600 shadow-xs shadow-rose-600/20'
+                    : 'bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900/50'
+                }`}
+                title={language === 'Tamil' ? 'அருகிலுள்ள மருத்துவமனை மற்றும் மருந்தகங்கள்' : 'Nearby 24/7 Hospitals & Pharmacy'}
+              >
+                <Hospital className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">
+                  {language === 'Tamil' ? 'அருகிலுள்ள மருத்துவமனை & மருந்தகம்' : 'Nearby Hospitals & Pharmacy'}
+                </span>
+              </button>
+
               {/* Direct Quick Language Toggle (English | தமிழ்) with active translation state */}
               <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold shadow-2xs">
                 <button
@@ -343,6 +365,14 @@ export default function App() {
             </div>
           </section>
 
+          {/* Nearby Care & Pharmacy Locator Banner when toggled */}
+          {showLocator && (
+            <NearbyCareLocator
+              language={language}
+              severity={currentAssessment?.severity}
+            />
+          )}
+
           {/* Error Alert Callout if needed */}
           {error && (
             <div
@@ -380,10 +410,18 @@ export default function App() {
 
           {/* Results Display */}
           {currentAssessment && (
-            <GuideResults
-              assessment={currentAssessment}
-              attachedImagePreview={selectedImage}
-            />
+            <>
+              <GuideResults
+                assessment={currentAssessment}
+                attachedImagePreview={selectedImage}
+              />
+
+              {/* Automatic Nearby Care Locator inside results */}
+              <NearbyCareLocator
+                language={language}
+                severity={currentAssessment.severity}
+              />
+            </>
           )}
         </main>
       </div>

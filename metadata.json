@@ -1,8 +1,9 @@
 {
   "name": "Mr Health AI",
-  "description": "Mr Health AI - Smart Health & First-Aid Assistant providing simple 5-Point guides (Cause, Effect, Reason, Treatment, Diet) from symptom descriptions and photos.",
+  "description": "Mr Health AI - Smart Health & First-Aid Assistant providing simple 5-Point guides (Cause, Effect, Reason, Treatment, Diet) from symptom descriptions and photos, with emergency hospital & pharmacy locator.",
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "geolocation"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

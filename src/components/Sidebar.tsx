@@ -7,7 +7,10 @@ import {
   ChevronRight,
   Trash2,
   X,
-  Bot
+  Bot,
+  Hospital,
+  Pill,
+  ExternalLink
 } from 'lucide-react';
 import { PRESET_CASES } from '../data/presets';
 import { HistoryItem, PresetCase } from '../types';
@@ -37,11 +40,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectHistory,
   onClearHistory,
 }) => {
-  // Only English and Tamil as explicitly requested by user
+  const isTamil = language === 'Tamil';
   const languages = [
     { code: 'English', label: 'English' },
     { code: 'Tamil', label: 'தமிழ் (Tamil)' },
   ];
+
+  const openMaps = (query: string) => {
+    window.open(`https://www.google.com/maps/search/${encodeURIComponent(query)}`, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <>
@@ -112,12 +119,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </section>
 
+          {/* Quick Nearby Places on Google Maps */}
+          <section className="space-y-2">
+            <label className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+              <Hospital className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+              {isTamil ? 'அருகிலுள்ள இடங்கள்' : 'Nearby on Google Maps'}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => openMaps('nearest 24/7 emergency hospital')}
+                className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-100 text-left transition cursor-pointer flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between text-rose-700 dark:text-rose-400">
+                  <Hospital className="w-4 h-4" />
+                  <ExternalLink className="w-3 h-3" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-900 dark:text-white mt-1">
+                  {isTamil ? 'மருத்துவமனை' : 'Hospitals'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openMaps('nearest 24 hours pharmacy medical store')}
+                className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 hover:bg-emerald-100 text-left transition cursor-pointer flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                  <Pill className="w-4 h-4" />
+                  <ExternalLink className="w-3 h-3" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-900 dark:text-white mt-1">
+                  {isTamil ? 'மருந்தகம்' : 'Pharmacies'}
+                </span>
+              </button>
+            </div>
+          </section>
+
           {/* Example Scenarios */}
           <section className="space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                Example Scenarios
+                {isTamil ? 'மாதிரி நிகழ்வுகள்' : 'Example Scenarios'}
               </label>
             </div>
             <div className="space-y-1.5">
@@ -151,7 +195,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                   <History className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  Recent History
+                  {isTamil ? 'சமீபத்திய பதிவுகள்' : 'Recent History'}
                 </label>
                 <button
                   type="button"
@@ -159,7 +203,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className="text-[10px] text-slate-500 hover:text-rose-600 flex items-center gap-1 cursor-pointer font-semibold"
                 >
                   <Trash2 className="w-3 h-3" />
-                  Clear
+                  {isTamil ? 'அழி' : 'Clear'}
                 </button>
               </div>
               <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
@@ -190,7 +234,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <section className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 space-y-1.5">
             <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-400 font-bold text-xs">
               <PhoneCall className="w-3.5 h-3.5" />
-              Emergency Numbers
+              {isTamil ? 'அவசர உதவி எண்கள்' : 'Emergency Numbers'}
             </div>
             <div className="text-[11px] text-rose-800 dark:text-rose-200 space-y-0.5 font-medium">
               <div>India: <span className="font-bold">108 / 112</span></div>

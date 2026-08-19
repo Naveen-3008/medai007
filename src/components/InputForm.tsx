@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   UploadCloud,
   Camera,
@@ -14,7 +14,8 @@ import {
   AlertOctagon,
   Bot,
   Languages,
-  Loader2
+  Loader2,
+  ArrowRightLeft
 } from 'lucide-react';
 import { CameraCaptureModal } from './CameraCaptureModal';
 
@@ -36,7 +37,7 @@ interface InputFormProps {
 
 export const InputForm: React.FC<InputFormProps> = ({
   language = 'English',
-  isTranslating = false,
+  isTranslating: parentTranslating = false,
   symptoms,
   onSymptomsChange,
   painLevel,
@@ -51,9 +52,64 @@ export const InputForm: React.FC<InputFormProps> = ({
 }) => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [localTranslating, setLocalTranslating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const isTamil = language === 'Tamil';
+  const isTranslating = parentTranslating || localTranslating;
+
+  // Check if text has English characters
+  const hasEnglishText = /[a-zA-Z]{3,}/.test(symptoms);
+
+  // Manual or Triggered Translation from English to Tamil
+  const translateToTamil = async (textToTranslate?: string) => {
+    const text = textToTranslate ?? symptoms;
+    if (!text || !text.trim() || !hasEnglishText) return;
+
+    setLocalTranslating(true);
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text,
+          targetLanguage: 'Tamil',
+          action: 'translate',
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.translatedText) {
+          onSymptomsChange(data.translatedText);
+        }
+      }
+    } catch (err) {
+      console.warn('Auto translate to Tamil error:', err);
+    } finally {
+      setLocalTranslating(false);
+    }
+  };
+
+  // Debounced auto-translation when typing in English while in Tamil mode
+  useEffect(() => {
+    if (isTamil && hasEnglishText && symptoms.trim().length >= 4) {
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
+      }
+      // Wait 1200ms after user stops typing to auto-translate to Tamil
+      typingTimerRef.current = setTimeout(() => {
+        translateToTamil(symptoms);
+      }, 1200);
+    }
+
+    return () => {
+      if (typingTimerRef.current) {
+        clearTimeout(typingTimerRef.current);
+      }
+    };
+  }, [symptoms, isTamil]);
 
   // Quick symptoms in English and Tamil
   const quickSymptomsEnglish = [
@@ -134,6 +190,15 @@ export const InputForm: React.FC<InputFormProps> = ({
         'Over a week ago',
       ];
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // If in Tamil mode and there are still English letters, translate before submitting
+    if (isTamil && hasEnglishText) {
+      await translateToTamil(symptoms);
+    }
+    onSubmit();
+  };
+
   return (
     <section
       id="mr-health-input-container"
@@ -151,7 +216,7 @@ export const InputForm: React.FC<InputFormProps> = ({
               {isTamil ? 'அறிகுறிகள் பரிசோதனை' : 'Symptom Assessment'}
             </h2>
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              {isTamil ? 'உங்களுக்கு என்ன ஆனது என்பதை விவரிக்கவும்' : 'Describe what happened or pick a quick tag below'}
+              {isTamil ? 'ஆங்கிலம் அல்லது தமிழில் தட்டச்சு செய்யலாம் (தானாகவே தமிழில் மாறும்)' : 'Describe what happened or pick a quick tag below'}
             </span>
           </div>
         </div>
@@ -188,13 +253,7 @@ export const InputForm: React.FC<InputFormProps> = ({
         </div>
       </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          onSubmit();
-        }}
-        className="space-y-4"
-      >
+      <form onSubmit={handleFormSubmit} className="space-y-4">
         {/* Responsive 2-Column Split */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Left Column: Symptoms Description */}
@@ -205,31 +264,47 @@ export const InputForm: React.FC<InputFormProps> = ({
                 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5"
               >
                 <Activity className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-                <span>{isTamil ? 'அறிகுறிகளை விவரிக்கவும் / என்ன நடந்தது?' : 'Describe Symptoms / What Happened'}</span>
+                <span>{isTamil ? 'அறிகுறிகளை விவரிக்கவும் (ஆங்கிலம் / தமிழ்)' : 'Describe Symptoms / What Happened'}</span>
               </label>
 
-              {/* Translation active badge */}
-              {isTranslating ? (
-                <span className="text-[11px] text-cyan-600 dark:text-cyan-400 flex items-center gap-1 font-semibold animate-pulse">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  {isTamil ? 'தமிழில் மொழிபெயர்க்கப்படுகிறது...' : 'Translating to English...'}
-                </span>
-              ) : (
-                <span className="text-[11px] text-slate-400 font-mono">
-                  {symptoms.length} chars
-                </span>
-              )}
+              {/* Status and manual translate trigger */}
+              <div className="flex items-center gap-2">
+                {isTranslating ? (
+                  <span className="text-[11px] text-cyan-600 dark:text-cyan-400 flex items-center gap-1 font-semibold animate-pulse">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {isTamil ? 'தானாக தமிழில் மாறுகிறது...' : 'Translating...'}
+                  </span>
+                ) : isTamil && hasEnglishText ? (
+                  <button
+                    type="button"
+                    onClick={() => translateToTamil(symptoms)}
+                    className="text-[11px] text-cyan-700 dark:text-cyan-300 hover:text-cyan-900 dark:hover:text-cyan-100 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 px-2 py-0.5 rounded-md flex items-center gap-1 font-bold cursor-pointer transition shadow-2xs"
+                    title="Translate English input to Tamil immediately"
+                  >
+                    <Languages className="w-3 h-3 text-cyan-600" />
+                    தமிழில் மாற்றுக
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    {symptoms.length} chars
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="relative rounded-2xl bg-slate-50/70 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 focus-within:border-cyan-500 focus-within:bg-white dark:focus-within:bg-slate-950 focus-within:ring-2 focus-within:ring-cyan-500/20 transition-all h-[140px] flex flex-col">
               <textarea
                 id="textarea-symptoms"
                 value={symptoms}
-                disabled={isTranslating}
+                onBlur={() => {
+                  if (isTamil && hasEnglishText) {
+                    translateToTamil(symptoms);
+                  }
+                }}
                 onChange={(e) => onSymptomsChange(e.target.value)}
                 placeholder={
                   isTamil
-                    ? 'எ.கா: சுடு பாத்திரத்தை தொட்டுவிட்டேன், விரல் எரிகிறது, சிவந்து சிறிய கொப்புளம் வந்துள்ளது...'
+                    ? 'நீங்கள் ஆங்கிலத்தில் தட்டச்சு செய்தாலும் தானாக தமிழில் மொழிபெயர்க்கப்படும் (எ.கா: I touched a hot pan, my finger is stinging and red...)'
                     : 'e.g. I touched a hot cooking pan, skin is stinging and red with a small blister...'
                 }
                 className="w-full flex-1 bg-transparent p-3.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-hidden resize-none"
