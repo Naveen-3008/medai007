@@ -11,7 +11,10 @@ import {
   LocateFixed,
   Loader2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Search,
+  X,
+  Sparkles
 } from 'lucide-react';
 
 interface NearbyCareLocatorProps {
@@ -27,11 +30,24 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
 }) => {
   const isTamil = language === 'Tamil';
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [customLocation, setCustomLocation] = useState<string>('');
   const [locating, setLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(!isCompact || severity === 'Severe / Seek Emergency Care');
 
-  // Attempt to get user GPS location smoothly on mount
+  // Load saved custom location if previously entered
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('mrhealthai_custom_location');
+      if (saved) {
+        setCustomLocation(saved);
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  }, []);
+
+  // Attempt browser geolocation on mount
   useEffect(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -40,16 +56,28 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
           });
-          setLocationStatus(isTamil ? '✓ நேரடி ஜி.பி.எஸ் இடம் இணைக்கப்பட்டது' : '✓ Live GPS Location Connected');
+          setLocationStatus(isTamil ? '✓ ஜி.பி.எஸ் இடம் இணைக்கப்பட்டது' : '✓ Live GPS Location Connected');
         },
-        (err) => {
-          console.warn('Geolocation access declined or unavailable, using local map search fallback', err);
-          setLocationStatus(null);
+        () => {
+          // Normal fallback for laptop/desktop IP
         },
-        { timeout: 8000 }
+        { timeout: 6000 }
       );
     }
   }, [isTamil]);
+
+  const handleCustomLocationChange = (val: string) => {
+    setCustomLocation(val);
+    try {
+      if (val.trim()) {
+        localStorage.setItem('mrhealthai_custom_location', val);
+      } else {
+        localStorage.removeItem('mrhealthai_custom_location');
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+  };
 
   const requestLocation = () => {
     if (!('geolocation' in navigator)) {
@@ -63,24 +91,35 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         });
-        setLocationStatus(isTamil ? '✓ துல்லியமான இடம் பெறப்பட்டது' : '✓ Accurate GPS Coordinates Retrieved');
+        setLocationStatus(isTamil ? '✓ நேரடி ஜி.பி.எஸ் பெறப்பட்டது' : '✓ Live GPS Active');
         setLocating(false);
       },
       () => {
         setLocating(false);
-        setLocationStatus(isTamil ? 'வரைபட பொதுத் தேடல் பயன்முறை' : 'General Map Search Mode');
+        setLocationStatus(isTamil ? 'பகுதி தேடல் பயன்முறை' : 'Area Search Mode');
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 8000 }
     );
   };
 
-  const openGoogleMaps = (query: string) => {
+  const openGoogleMaps = (type: 'hospital' | 'pharmacy' | 'clinic') => {
+    let query = '';
+    const loc = customLocation.trim();
+
+    if (type === 'hospital') {
+      query = loc ? `nearest 24/7 emergency hospital in ${loc}` : 'nearest 24/7 emergency hospital';
+    } else if (type === 'pharmacy') {
+      query = loc ? `nearest 24 hours pharmacy medical store in ${loc}` : 'nearest 24 hours pharmacy medical store';
+    } else {
+      query = loc ? `nearest doctor clinic in ${loc}` : 'nearest doctor clinic';
+    }
+
     let mapsUrl = '';
-    if (coords) {
-      // Precise search centered at user's lat, lng
+    if (!loc && coords) {
+      // Use device GPS coordinates if no custom area typed
       mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(query)}/@${coords.lat},${coords.lng},14z`;
     } else {
-      // Smart location-aware query
+      // Use custom locality query for 100% accuracy on laptops/PCs
       mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(query)}`;
     }
     window.open(mapsUrl, '_blank', 'noopener,noreferrer');
@@ -123,28 +162,28 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               {isTamil
-                ? 'Google Maps மூலம் 24/7 அவசர மருத்துவமனைகள், கிளினிக்குகள் மற்றும் மருந்தகங்களை 1-கிளிக்கில் கண்டறியவும்'
-                : '1-Click instant Google Maps directions to 24/7 hospitals, clinics, and medical shops near you'}
+                ? 'Google Maps மூலம் 24/7 மருத்துவமனைகள் & மருந்தகங்களை கண்டறியவும்'
+                : '1-Click instant Google Maps directions to 24/7 hospitals, clinics, and medical shops'}
             </p>
           </div>
         </div>
 
-        {/* GPS status and actions */}
+        {/* GPS trigger & expand controls */}
         <div className="flex items-center gap-2 self-end sm:self-center">
           <button
             type="button"
             onClick={requestLocation}
             disabled={locating}
             className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
-            title="Refresh accurate GPS location"
+            title="Detect GPS location"
           >
             {locating ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-600" />
             ) : (
               <LocateFixed className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
             )}
-            <span className="hidden md:inline">
-              {coords ? (isTamil ? 'ஜி.பி.எஸ் இணைக்கப்பட்டது' : 'GPS Active') : (isTamil ? 'என் இருப்பிடம்' : 'Find My Location')}
+            <span className="hidden sm:inline">
+              {coords ? (isTamil ? 'ஜி.பி.எஸ் உள்ளது' : 'GPS Active') : (isTamil ? 'ஜிபிஎஸ் கண்டறி' : 'Detect GPS')}
             </span>
           </button>
 
@@ -164,13 +203,61 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
       {/* Body Content */}
       {isExpanded && (
         <div className="p-4 sm:p-5 space-y-4">
+          {/* Laptop / PC Location Fix: Manual Area & City Input Box */}
+          <div className="bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label
+                htmlFor="input-custom-location"
+                className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5"
+              >
+                <MapPin className="w-3.5 h-3.5 text-rose-600" />
+                <span>
+                  {isTamil ? 'உங்கள் பகுதி / நகரம் / அஞ்சல் குறியீடு (துல்லியமான தேடலுக்கு):' : 'Set Your Specific Area, City, or Pincode (Accurate for Laptops & Mobile):'}
+                </span>
+              </label>
+
+              {customLocation && (
+                <button
+                  type="button"
+                  onClick={() => handleCustomLocationChange('')}
+                  className="text-[11px] text-slate-500 hover:text-rose-600 flex items-center gap-1 self-end sm:self-auto cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                  {isTamil ? 'நீக்கு (ஜிபிஎஸ் பயன்படுத்து)' : 'Clear (Use GPS)'}
+                </button>
+              )}
+            </div>
+
+            <div className="relative flex items-center">
+              <input
+                id="input-custom-location"
+                type="text"
+                value={customLocation}
+                onChange={(e) => handleCustomLocationChange(e.target.value)}
+                placeholder={
+                  isTamil
+                    ? 'எ.கா: T. Nagar Chennai, Coimbatore, Madurai, Anna Nagar, அல்லது அஞ்சல் குறியீடு 600017...'
+                    : 'e.g. T. Nagar Chennai, Coimbatore, Bangalore, Manhattan NY, or Pin code 600017...'
+                }
+                className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl py-2 pl-9 pr-3 text-xs sm:text-sm font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-hidden focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition shadow-2xs"
+              />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+            </div>
+
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+              💡 {isTamil
+                ? 'மடிக்கணினியில் (Laptop) தவறான இடம் காட்டினால், உங்கள் சரியான பகுதியை மேலே உள்ளிடவும்.'
+                : 'Laptops use Wi-Fi IP routing which can be inaccurate. Typing your area above ensures 100% accurate results.'}
+            </p>
+          </div>
+
           {/* Quick 1-Click Google Maps Search Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* 1. 24/7 Emergency Hospital */}
             <button
               id="btn-find-hospital"
               type="button"
-              onClick={() => openGoogleMaps('nearest 24/7 emergency hospital')}
+              onClick={() => openGoogleMaps('hospital')}
               className="p-3.5 rounded-2xl bg-gradient-to-br from-rose-50 to-rose-100/60 dark:from-rose-950/30 dark:to-rose-900/20 hover:from-rose-100 hover:to-rose-200/80 dark:hover:from-rose-900/40 dark:hover:to-rose-800/30 border border-rose-200 dark:border-rose-900/50 text-left transition group cursor-pointer shadow-2xs active:scale-98 flex flex-col justify-between"
             >
               <div className="flex items-start justify-between">
@@ -187,7 +274,9 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
                   {isTamil ? '24/7 அவசர மருத்துவமனைகள்' : '24/7 Emergency Hospitals'}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  {isTamil ? 'அருகிலுள்ள அரசு & தனியார் அவசர சிகிச்சை பிரிவுகள்' : 'Nearest emergency trauma centers & ICUs'}
+                  {customLocation
+                    ? (isTamil ? `${customLocation} பகுதியில் உள்ள மருத்துவமனைகள்` : `Emergency trauma centers in ${customLocation}`)
+                    : (isTamil ? 'அருகிலுள்ள அவசர சிகிச்சை பிரிவுகள்' : 'Nearest emergency trauma centers')}
                 </p>
               </div>
             </button>
@@ -196,7 +285,7 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
             <button
               id="btn-find-pharmacy"
               type="button"
-              onClick={() => openGoogleMaps('nearest 24 hours pharmacy medical store')}
+              onClick={() => openGoogleMaps('pharmacy')}
               className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-100/60 dark:from-emerald-950/30 dark:to-teal-900/20 hover:from-emerald-100 hover:to-teal-200/80 dark:hover:from-emerald-900/40 dark:hover:to-teal-800/30 border border-emerald-200 dark:border-emerald-900/50 text-left transition group cursor-pointer shadow-2xs active:scale-98 flex flex-col justify-between"
             >
               <div className="flex items-start justify-between">
@@ -213,7 +302,9 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
                   {isTamil ? 'மருந்தகங்கள் & மெடிக்கல்' : 'Pharmacies & Medical Stores'}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  {isTamil ? '24 மணி நேர மருந்து கடைகள் மற்றும் முதலுதவி பொருட்கள்' : '24-hour chemists, first-aid & OTC supplies'}
+                  {customLocation
+                    ? (isTamil ? `${customLocation} பகுதியில் உள்ள மருந்தகங்கள்` : `24-hour chemists in ${customLocation}`)
+                    : (isTamil ? '24 மணி நேர மருந்து கடைகள்' : '24-hour chemists & medical stores')}
                 </p>
               </div>
             </button>
@@ -222,7 +313,7 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
             <button
               id="btn-find-clinic"
               type="button"
-              onClick={() => openGoogleMaps('nearest doctor clinic walk in')}
+              onClick={() => openGoogleMaps('clinic')}
               className="p-3.5 rounded-2xl bg-gradient-to-br from-sky-50 to-blue-100/60 dark:from-sky-950/30 dark:to-blue-900/20 hover:from-sky-100 hover:to-blue-200/80 dark:hover:from-sky-900/40 dark:hover:to-blue-800/30 border border-sky-200 dark:border-sky-900/50 text-left transition group cursor-pointer shadow-2xs active:scale-98 flex flex-col justify-between"
             >
               <div className="flex items-start justify-between">
@@ -239,7 +330,9 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
                   {isTamil ? 'கிளினிக்குகள் & மருத்துவர்கள்' : 'Clinics & General Doctors'}
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                  {isTamil ? 'அருகிலுள்ள பொது மருத்துவ பரிசோதனை நிலையங்கள்' : 'Walk-in outpatient clinics & family physicians'}
+                  {customLocation
+                    ? (isTamil ? `${customLocation} பகுதியில் உள்ள மருத்துவர்கள்` : `Family doctors & clinics in ${customLocation}`)
+                    : (isTamil ? 'பொது மருத்துவ கிளினிக்குகள்' : 'Walk-in outpatient clinics')}
                 </p>
               </div>
             </button>
@@ -248,10 +341,10 @@ export const NearbyCareLocator: React.FC<NearbyCareLocatorProps> = ({
           {/* Quick Emergency Phone Hotlines Banner */}
           <div className="rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
-              <PhoneCall className="w-4 h-4 text-rose-600" />
+              <PhoneCall className="w-4 h-4 text-rose-600 shrink-0" />
               <span>
                 <strong className="text-slate-900 dark:text-white">{isTamil ? 'உடனடி அவசர அழைப்பு:' : 'Instant Emergency Hotlines:'}</strong>{' '}
-                {isTamil ? 'கடுமையான மூச்சுத்திணறல் அல்லது அதீத ரத்தக்கசிவுக்கு உடனே அழைக்கவும்' : 'For severe trauma, uncontrolled bleeding, or breathing distress'}
+                {isTamil ? 'கடுமையான அவசர நிலைக்கு உடனே அழைக்கவும்' : 'For severe trauma or immediate emergency'}
               </span>
             </div>
 
